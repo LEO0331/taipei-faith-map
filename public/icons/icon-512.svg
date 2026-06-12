@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512" role="img" aria-label="台北宗教團體地圖">
+  <rect width="512" height="512" rx="100" fill="#4b5563"/>
+  <circle cx="256" cy="208" r="112" fill="#f9fafb"/>
+  <path d="M256 80c-80 0-144 64-144 144 0 112 144 224 144 224s144-112 144-224c0-80-64-144-144-144zm0 192a48 48 0 1 1 0-96 48 48 0 0 1 0 96z" fill="#0f766e"/>
+  <path d="M192 216h128M256 152v128" stroke="#f9fafb" stroke-width="26" stroke-linecap="round"/>
+</svg>

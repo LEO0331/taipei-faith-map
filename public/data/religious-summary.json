@@ -1,0 +1,109 @@
+{
+  "total": 551,
+  "byReligion": [
+    {
+      "religion": "基督教",
+      "count": 203
+    },
+    {
+      "religion": "道教",
+      "count": 170
+    },
+    {
+      "religion": "佛教",
+      "count": 107
+    },
+    {
+      "religion": "其他",
+      "count": 35
+    },
+    {
+      "religion": "未分類",
+      "count": 15
+    },
+    {
+      "religion": "天主教",
+      "count": 10
+    },
+    {
+      "religion": "一貫道",
+      "count": 4
+    },
+    {
+      "religion": "回教",
+      "count": 2
+    },
+    {
+      "religion": "天理教",
+      "count": 1
+    },
+    {
+      "religion": "天德教",
+      "count": 1
+    },
+    {
+      "religion": "巴哈伊教",
+      "count": 1
+    },
+    {
+      "religion": "軒轅教",
+      "count": 1
+    },
+    {
+      "religion": "理教",
+      "count": 1
+    }
+  ],
+  "byDistrict": [
+    {
+      "district": "中山區",
+      "count": 75
+    },
+    {
+      "district": "北投區",
+      "count": 67
+    },
+    {
+      "district": "大安區",
+      "count": 65
+    },
+    {
+      "district": "士林區",
+      "count": 53
+    },
+    {
+      "district": "中正區",
+      "count": 44
+    },
+    {
+      "district": "信義區",
+      "count": 44
+    },
+    {
+      "district": "大同區",
+      "count": 43
+    },
+    {
+      "district": "文山區",
+      "count": 43
+    },
+    {
+      "district": "松山區",
+      "count": 40
+    },
+    {
+      "district": "萬華區",
+      "count": 35
+    },
+    {
+      "district": "內湖區",
+      "count": 23
+    },
+    {
+      "district": "南港區",
+      "count": 19
+    }
+  ],
+  "withFestivalDateCount": 271,
+  "withoutFestivalDateCount": 280
+}

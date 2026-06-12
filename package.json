@@ -1,0 +1,34 @@
+{
+  "name": "taipei-faith-map",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite --host 127.0.0.1",
+    "build": "tsc -b && vite build",
+    "preview": "vite preview --host 127.0.0.1",
+    "test": "vitest run",
+    "convert:data": "tsx scripts/convertReligiousOrganizations.ts"
+  },
+  "dependencies": {
+    "@vitejs/plugin-react": "^4.3.4",
+    "leaflet": "latest",
+    "leaflet.markercluster": "latest",
+    "proj4": "latest",
+    "react": "latest",
+    "react-dom": "latest",
+    "react-leaflet": "latest",
+    "xlsx": "latest"
+  },
+  "devDependencies": {
+    "@types/leaflet": "latest",
+    "@types/leaflet.markercluster": "latest",
+    "@types/node": "latest",
+    "@types/react": "latest",
+    "@types/react-dom": "latest",
+    "tsx": "latest",
+    "typescript": "latest",
+    "vite": "^5.4.11",
+    "vitest": "^2.1.8"
+  }
+}

@@ -1,0 +1,21 @@
+{
+  "sourceFile": "臺北市已立案宗教團體點位資料.ods",
+  "sheetName": "工作表1",
+  "generatedAt": "2026-06-12T05:14:33.844Z",
+  "inputRows": 551,
+  "outputRows": 551,
+  "skippedRows": [],
+  "coordinateOutliers": [],
+  "taipeiBounds": {
+    "minLng": 121.43,
+    "maxLng": 121.7,
+    "minLat": 24.9,
+    "maxLat": 25.25
+  },
+  "notes": [
+    "Coordinates were converted from TWD97 / TM2 (EPSG:3826) to WGS84 for Leaflet.",
+    "Blank religion values were normalized to 未分類.",
+    "負責人 was intentionally excluded from generated public JSON.",
+    "Festival date text is split on | and kept in its original lunar-calendar wording."
+  ]
+}
