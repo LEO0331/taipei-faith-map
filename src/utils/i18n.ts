@@ -39,6 +39,7 @@ export const translations = {
     festivalAvailable: '有資料',
     festivalMissing: '無資料',
     registeredCount: '登記數量',
+    dataLoadError: '資料載入失敗，請重新整理或清除瀏覽器快取後再試。',
   },
   en: {
     appTitle: 'Taipei Registered Religious Groups Map',
@@ -79,6 +80,7 @@ export const translations = {
     festivalAvailable: 'Available',
     festivalMissing: 'Missing',
     registeredCount: 'registered organization count',
+    dataLoadError: 'Data failed to load. Refresh or clear the browser cache, then try again.',
   },
 } as const;
 

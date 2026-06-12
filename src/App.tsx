@@ -14,6 +14,7 @@ import { LanguageToggle } from './components/LanguageToggle';
 import { NearbyPanel } from './components/NearbyPanel';
 import { ReligiousOrganizationList } from './components/ReligiousOrganizationList';
 import { ReligiousOrganizationMap } from './components/ReligiousOrganizationMap';
+import { getPublicAssetPath } from './utils/assets';
 import { calculateDistanceMeters } from './utils/geo';
 import { buildSummary, filterOrganizations } from './utils/data';
 import { getStoredLanguage, translations } from './utils/i18n';
@@ -36,6 +37,7 @@ export function App() {
   const [radiusMeters, setRadiusMeters] = useState(1000);
   const [userLocation, setUserLocation] = useState<{ latitude: number; longitude: number }>();
   const [nearbyError, setNearbyError] = useState<string>();
+  const [dataLoadError, setDataLoadError] = useState(false);
 
   const t = translations[language];
 
@@ -45,16 +47,16 @@ export function App() {
   }, [language]);
 
   useEffect(() => {
-    Promise.all([
-      fetch('/data/religious-organizations.json').then((response) => response.json()),
-      fetch('/data/religious-summary.json').then((response) => response.json()),
-    ])
+    loadAppData(import.meta.env.BASE_URL)
       .then(([items, summaryData]) => {
+        setDataLoadError(false);
         setOrganizations(items);
         setSummary(summaryData);
       })
       .catch(() => {
+        setDataLoadError(true);
         setOrganizations([]);
+        setSummary(undefined);
       });
   }, []);
 
@@ -143,6 +145,7 @@ export function App() {
       </header>
 
       <main>
+        {dataLoadError ? <p className="status-text">{t.dataLoadError}</p> : null}
         <section className="workspace" aria-label={t.appTitle}>
           <FilterPanel
             districts={districts}
@@ -178,4 +181,24 @@ export function App() {
       <Footer language={language} />
     </div>
   );
+}
+
+function loadAppData(baseUrl: string): Promise<[ReligiousOrganization[], ReligiousSummary]> {
+  return Promise.all([
+    fetchJson<ReligiousOrganization[]>(getPublicAssetPath(withCacheBust('data/religious-organizations.json'), baseUrl)),
+    fetchJson<ReligiousSummary>(getPublicAssetPath(withCacheBust('data/religious-summary.json'), baseUrl)),
+  ]);
+}
+
+function withCacheBust(path: string): string {
+  return `${path}?v=${Date.now()}`;
+}
+
+async function fetchJson<T>(url: string): Promise<T> {
+  const response = await fetch(url, { cache: 'no-store' });
+  if (!response.ok) {
+    throw new Error(`Failed to load ${url}: ${response.status}`);
+  }
+
+  return response.json() as Promise<T>;
 }
