@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { filterOrganizations, normalizeReligion, parseFestivalDates } from './data';
+import { buildSummary, filterOrganizations, normalizeReligion, parseFestivalDates } from './data';
 import type { ReligiousOrganization } from '../types';
 
 const baseItem: ReligiousOrganization = {
@@ -48,6 +48,45 @@ describe('data utilities', () => {
     expect(filterOrganizations(items, emptyFilters('天上聖母'))).toHaveLength(1);
     expect(filterOrganizations(items, emptyFilters('信義區'))).toHaveLength(1);
     expect(filterOrganizations(items, { ...emptyFilters(''), hasFestivalDate: true })).toHaveLength(1);
+  });
+
+  it('combines religion, district, village, festival, and case-insensitive search filters', () => {
+    const items: ReligiousOrganization[] = [
+      baseItem,
+      { ...baseItem, id: 'org-2', name: '龍門佛堂', religion: '佛教' },
+      { ...baseItem, id: 'org-3', name: '文山宮', district: '文山區', village: '景美里' },
+      { ...baseItem, id: 'org-4', name: '無慶典宮', festivalDates: [] },
+    ];
+
+    expect(
+      filterOrganizations(items, {
+        religion: '道教',
+        district: '大安區',
+        village: '龍門里',
+        hasFestivalDate: true,
+        search: '測試宮',
+      }).map((item) => item.id),
+    ).toEqual(['org-1']);
+
+    expect(filterOrganizations(items, { ...emptyFilters('龍門佛堂'), religion: '佛教' }).map((item) => item.id)).toEqual([
+      'org-2',
+    ]);
+    expect(filterOrganizations(items, { ...emptyFilters(''), religion: 'All' })).toHaveLength(items.length);
+  });
+
+  it('builds dashboard data from the same filtered records', () => {
+    const filteredItems = filterOrganizations(
+      [baseItem, { ...baseItem, id: 'org-2', district: '信義區', religion: '佛教', festivalDates: [] }],
+      { ...emptyFilters(''), district: '大安區' },
+    );
+
+    expect(buildSummary(filteredItems)).toMatchObject({
+      total: 1,
+      byDistrict: [{ district: '大安區', count: 1 }],
+      byReligion: [{ religion: '道教', count: 1 }],
+      withFestivalDateCount: 1,
+      withoutFestivalDateCount: 0,
+    });
   });
 });
 

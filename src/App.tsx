@@ -4,7 +4,6 @@ import type {
   Language,
   NearbyResult,
   ReligiousOrganization,
-  ReligiousSummary,
 } from './types';
 import { Dashboard } from './components/Dashboard';
 import { DisclaimerNotice } from './components/DisclaimerNotice';
@@ -19,21 +18,12 @@ import { calculateDistanceMeters } from './utils/geo';
 import { buildSummary, filterOrganizations } from './utils/data';
 import { getStoredLanguage, translations } from './utils/i18n';
 
-const initialFilters: Filters = {
-  religion: '全部',
-  district: '',
-  village: '',
-  hasFestivalDate: false,
-  search: '',
-};
-
 const radiusOptions = [500, 1000, 2000, 5000];
 
 export function App() {
   const [language, setLanguage] = useState<Language>(() => getStoredLanguage());
   const [organizations, setOrganizations] = useState<ReligiousOrganization[]>([]);
-  const [summary, setSummary] = useState<ReligiousSummary | undefined>();
-  const [filters, setFilters] = useState<Filters>(initialFilters);
+  const [filters, setFilters] = useState<Filters>(() => defaultFilters(getStoredLanguage()));
   const [radiusMeters, setRadiusMeters] = useState(1000);
   const [userLocation, setUserLocation] = useState<{ latitude: number; longitude: number }>();
   const [nearbyError, setNearbyError] = useState<string>();
@@ -48,15 +38,13 @@ export function App() {
 
   useEffect(() => {
     loadAppData(import.meta.env.BASE_URL)
-      .then(([items, summaryData]) => {
+      .then((items) => {
         setDataLoadError(false);
         setOrganizations(items);
-        setSummary(summaryData);
       })
       .catch(() => {
         setDataLoadError(true);
         setOrganizations([]);
-        setSummary(undefined);
       });
   }, []);
 
@@ -65,8 +53,7 @@ export function App() {
     [organizations, filters],
   );
 
-  const fallbackSummary = useMemo(() => buildSummary(organizations), [organizations]);
-  const activeSummary = summary ?? fallbackSummary;
+  const filteredSummary = useMemo(() => buildSummary(filteredOrganizations), [filteredOrganizations]);
 
   const districts = useMemo(
     () => [...new Set(organizations.map((item) => item.district))].sort((a, b) => a.localeCompare(b, 'zh-Hant')),
@@ -84,7 +71,7 @@ export function App() {
 
   const nearbyResults = useMemo<NearbyResult[]>(() => {
     if (!userLocation) return [];
-    return organizations
+    return filteredOrganizations
       .map((item) => ({
         ...item,
         distanceMeters: calculateDistanceMeters(
@@ -97,7 +84,7 @@ export function App() {
       .filter((item) => item.distanceMeters <= radiusMeters)
       .sort((a, b) => a.distanceMeters - b.distanceMeters)
       .slice(0, 30);
-  }, [organizations, radiusMeters, userLocation]);
+  }, [filteredOrganizations, radiusMeters, userLocation]);
 
   const handleLanguageChange = (nextLanguage: Language) => {
     setLanguage(nextLanguage);
@@ -173,8 +160,8 @@ export function App() {
           </div>
         </section>
 
-        <Dashboard language={language} summary={activeSummary} />
-        <ReligiousOrganizationList items={filteredOrganizations.slice(0, 60)} language={language} />
+        <Dashboard language={language} summary={filteredSummary} />
+        <ReligiousOrganizationList items={filteredOrganizations} language={language} />
         <DisclaimerNotice language={language} />
       </main>
 
@@ -183,15 +170,24 @@ export function App() {
   );
 }
 
-function loadAppData(baseUrl: string): Promise<[ReligiousOrganization[], ReligiousSummary]> {
-  return Promise.all([
-    fetchJson<ReligiousOrganization[]>(getPublicAssetPath(withCacheBust('data/religious-organizations.json'), baseUrl)),
-    fetchJson<ReligiousSummary>(getPublicAssetPath(withCacheBust('data/religious-summary.json'), baseUrl)),
-  ]);
+function loadAppData(baseUrl: string): Promise<ReligiousOrganization[]> {
+  return fetchJson<ReligiousOrganization[]>(
+    getPublicAssetPath(withCacheBust('data/religious-organizations.json'), baseUrl),
+  );
 }
 
 function withCacheBust(path: string): string {
   return `${path}?v=${Date.now()}`;
+}
+
+function defaultFilters(language: Language): Filters {
+  return {
+    religion: language === 'zh' ? '全部' : 'All',
+    district: '',
+    village: '',
+    hasFestivalDate: false,
+    search: '',
+  };
 }
 
 async function fetchJson<T>(url: string): Promise<T> {

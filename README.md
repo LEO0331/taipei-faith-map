@@ -1,10 +1,12 @@
-# Taipei Registered Religious Groups Map / 台北宗教團體地圖
+# Taipei Registered Religious Groups Map
 
 Mobile-first bilingual web app for exploring Taipei registered religious organization locations from a public ODS dataset.
 
+[繁體中文說明](README-zh.md)
+
 ## Purpose
 
-This project provides a public map and lightweight dashboard for the dataset `臺北市已立案宗教團體點位資料`. It is designed for browsing registered organization locations, filtering by district or religion type, checking festival-date text when available, and finding nearby registered organizations with browser geolocation.
+This project provides a public map and lightweight dashboard for the "Taipei City Registered Religious Organizations Location Data" dataset. It is designed for browsing registered organization locations, filtering by district or religion type, checking festival-date text when available, and finding nearby registered organizations with browser geolocation.
 
 ## Data Source
 
@@ -15,7 +17,7 @@ This project provides a public map and lightweight dashboard for the dataset `�
   - `public/data/religious-summary.json`
   - `public/data/conversion-report.json`
 
-The public UI intentionally does not display `負責人` by default.
+The public UI intentionally does not display the person in charge by default.
 
 ## Coordinate Conversion
 
@@ -97,4 +99,4 @@ Publish the `dist` directory. If deploying under a repository subpath, set the V
 
 This dataset is a snapshot of registered religious organizations. Registered organization counts do not represent popularity, number of followers, attendance, activity level, or religious influence.
 
-實際資訊請以主管機關及現場公告為準。
+For current information, refer to the responsible government authority and on-site notices.
