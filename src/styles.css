@@ -395,6 +395,10 @@ select {
   gap: 0.75rem;
 }
 
+.record-actions { display: flex; align-items: start; flex-direction: column; gap: 12px; }
+.popup-explore { display: block; margin-top: 12px; }
+.faith-loading { position: fixed; inset: 0; z-index: 2000; display: grid; place-items: center; background: #f6f2e9; }
+
 .record-item {
   border-top: 1px solid #e2e8f0;
   display: grid;

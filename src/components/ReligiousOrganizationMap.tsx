@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import L from 'leaflet';
 import 'leaflet.markercluster';
 import { MapContainer, TileLayer, useMap } from 'react-leaflet';
@@ -9,6 +9,7 @@ import { religionLabels, translations } from '../utils/i18n';
 type Props = {
   items: ReligiousOrganization[];
   language: Language;
+  onExplore: (organization: ReligiousOrganization, restoreFocus?: () => void) => void;
   userLocation?: { latitude: number; longitude: number };
 };
 
@@ -30,7 +31,7 @@ const religionColors: Record<string, string> = {
   未分類: '#374151',
 };
 
-export function ReligiousOrganizationMap({ items, language, userLocation }: Props) {
+export function ReligiousOrganizationMap({ items, language, userLocation, onExplore }: Props) {
   return (
     <div className="map-shell">
       <MapContainer center={TAIPEI_CENTER} zoom={12} scrollWheelZoom className="map">
@@ -38,7 +39,7 @@ export function ReligiousOrganizationMap({ items, language, userLocation }: Prop
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
         />
-        <ClusteredMarkers items={items} language={language} />
+        <ClusteredMarkers items={items} language={language} onExplore={onExplore} />
         <UserLocationMarker location={userLocation} language={language} />
       </MapContainer>
       <MapLegend language={language} />
@@ -46,8 +47,9 @@ export function ReligiousOrganizationMap({ items, language, userLocation }: Prop
   );
 }
 
-function ClusteredMarkers({ items, language }: { items: ReligiousOrganization[]; language: Language }) {
+function ClusteredMarkers({ items, language, onExplore }: Pick<Props, 'items' | 'language' | 'onExplore'>) {
   const map = useMap();
+  const markersById = useRef(new Map<string, L.Marker>());
 
   useEffect(() => {
     const cluster = L.markerClusterGroup({
@@ -56,20 +58,51 @@ function ClusteredMarkers({ items, language }: { items: ReligiousOrganization[];
       showCoverageOnHover: false,
     });
 
+    const markers = new Map<string, L.Marker>();
     for (const item of items) {
       const marker = L.marker([item.latitude, item.longitude], {
         icon: createMarkerIcon(item.religion),
         title: item.name,
       });
       marker.bindPopup(renderPopup(item, language), { maxWidth: 280 });
+      markers.set(item.id, marker);
       cluster.addLayer(marker);
     }
+    markersById.current = markers;
 
     map.addLayer(cluster);
+    const container = map.getContainer();
+    const organizationsById = new Map(items.map(item => [item.id, item]));
+    const handleExplore = (event: MouseEvent) => {
+      const target = event.target instanceof Element ? event.target.closest<HTMLButtonElement>('button[data-faith-organization]') : null;
+      if (!target || !container.contains(target)) return;
+      const organization = organizationsById.get(target.dataset.faithOrganization ?? '');
+      if (organization) {
+        target.focus();
+        onExplore(organization, () => {
+          // Language changes can replace Leaflet's popup DOM while the scene is open.
+          if (target.isConnected) { target.focus({ preventScroll: true }); return; }
+          const currentMarker = markersById.current.get(organization.id);
+          const popup = currentMarker?.getPopup();
+          if (currentMarker && popup) {
+            const autoPan = popup.options.autoPan;
+            popup.options.autoPan = false;
+            currentMarker.openPopup();
+            popup.options.autoPan = autoPan;
+            const button = popup.getElement()?.querySelector<HTMLButtonElement>('button[data-faith-organization]');
+            if (button) { button.focus({ preventScroll: true }); return; }
+          }
+          container.focus({ preventScroll: true });
+        });
+      }
+    };
+    container.addEventListener('click', handleExplore);
     return () => {
+      container.removeEventListener('click', handleExplore);
+      if (markersById.current === markers) markersById.current = new Map();
       map.removeLayer(cluster);
     };
-  }, [items, language, map]);
+  }, [items, language, map, onExplore]);
 
   return null;
 }
@@ -82,23 +115,32 @@ function UserLocationMarker({
   language: Language;
 }) {
   const map = useMap();
+  const markerRef = useRef<L.CircleMarker | null>(null);
+  const latitude = location?.latitude;
+  const longitude = location?.longitude;
 
   useEffect(() => {
-    if (!location) return undefined;
-    const marker = L.circleMarker([location.latitude, location.longitude], {
+    if (latitude === undefined || longitude === undefined) return undefined;
+    const marker = L.circleMarker([latitude, longitude], {
       radius: 9,
       color: '#0f766e',
       fillColor: '#14b8a6',
       fillOpacity: 0.9,
       weight: 3,
-    }).bindPopup(translations[language].userLocation);
+    });
+    markerRef.current = marker;
     marker.addTo(map);
-    map.setView([location.latitude, location.longitude], 15);
+    map.setView([latitude, longitude], 15);
 
     return () => {
       marker.removeFrom(map);
+      if (markerRef.current === marker) markerRef.current = null;
     };
-  }, [language, location, map]);
+  }, [latitude, longitude, map]);
+
+  useEffect(() => {
+    markerRef.current?.bindPopup(translations[language].userLocation);
+  }, [language, latitude, longitude]);
 
   return null;
 }
@@ -144,6 +186,7 @@ function renderPopup(item: ReligiousOrganization, language: Language) {
       <a href="${getGoogleMapsUrl(item.latitude, item.longitude)}" target="_blank" rel="noreferrer">
         ${escapeHtml(t.openGoogleMaps)}
       </a>
+      <button type="button" class="primary-button popup-explore" data-faith-organization="${escapeHtml(item.id)}">${escapeHtml(t.exploreFaithSpace)}</button>
     </article>
   `;
 }

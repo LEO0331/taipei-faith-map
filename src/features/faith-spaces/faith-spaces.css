@@ -1,0 +1,77 @@
+.faith-overlay {
+  --faith-accent: #963e30;
+  --faith-ink: #322b25;
+  --faith-line: #dcd4c7;
+  position: fixed;
+  inset: 0;
+  z-index: 2000;
+  overflow: auto;
+  background: #f6f2e9;
+  color: var(--faith-ink);
+  overscroll-behavior: contain;
+}
+.faith-theme-buddhist { --faith-accent: #6b632b; }
+.faith-theme-christian { --faith-accent: #3c6175; }
+.faith-theme-catholic { --faith-accent: #694c77; }
+.faith-theme-islamic { --faith-accent: #23685e; }
+.faith-theme-generic { --faith-accent: #50665c; }
+.faith-dialog { max-width: 1600px; margin: auto; padding: max(16px, env(safe-area-inset-top)) max(24px, env(safe-area-inset-right)) max(28px, env(safe-area-inset-bottom)) max(24px, env(safe-area-inset-left)); }
+.faith-header { position: sticky; top: 0; z-index: 10; background: #f6f2e9; display: flex; align-items: center; justify-content: space-between; gap: 16px; border-bottom: 1px solid var(--faith-line); padding-bottom: 16px; }
+.faith-overline { font-size: 11px; letter-spacing: .12em; font-weight: 700; color: var(--faith-accent); line-height: 1.6; margin: 0; }
+.faith-header > .faith-overline { text-align: center; }
+.faith-title-row { display: flex; align-items: end; justify-content: space-between; gap: 24px; padding: 30px 0 24px; }
+.faith-title-row h1 { font-family: Georgia, 'Noto Serif TC', serif; font-weight: 500; font-size: clamp(24px, 3vw, 40px); letter-spacing: .02em; margin: 6px 0 0; overflow-wrap: anywhere; }
+.faith-scene-title { font-family: Georgia, serif; font-size: 19px; color: #73685d; margin: 0 0 4px; }
+.faith-exhibition { display: grid; grid-template-columns: minmax(0, 1fr) 330px; gap: 32px; align-items: start; }
+.faith-art-panel, .faith-info { min-width: 0; }
+.faith-scene { position: relative; background: #e4d9c5; border-radius: 140px 140px 4px 4px; overflow: hidden; isolation: isolate; box-shadow: 0 14px 32px #473b2810; }
+.faith-illustration { display: block; width: 100%; height: auto; }
+.faith-hotspot { position: absolute; transform: translate(-50%, -50%); display: grid; place-items: center; width: 46px; height: 46px; border-radius: 50%; border: 1px solid #fff9; background: #fff5e9ef; color: #332b24; cursor: pointer; box-shadow: 0 0 0 7px #fff3, 0 3px 12px #0003; transition: background .2s, box-shadow .2s; font-size: 13px; font-weight: 800; }
+.faith-hotspot.is-selected { background: var(--faith-accent); color: white; box-shadow: 0 0 0 7px #ffffff5c, 0 3px 12px #0003; }
+.faith-art-caption { position: absolute; bottom: 0; left: 0; right: 0; display: flex; gap: 12px; justify-content: space-between; padding: 24px; background: linear-gradient(transparent, #201d19b3); color: #fff9ed; font-size: 12px; letter-spacing: .06em; pointer-events: none; }
+.faith-scene-guide { display: flex; gap: 24px; align-items: center; padding: 20px 0 12px; }
+.faith-scene-guide p { font-size: 13px; margin: 0; line-height: 1.7; }
+.faith-disclaimer { font-size: 12px; line-height: 1.7; color: #706358; border-block: 1px solid var(--faith-line); padding-block: 10px; margin: 0 0 18px; }
+.faith-info { padding: 6px 0; }
+.faith-info p { line-height: 1.8; }
+.faith-introduction { font-size: 14px; margin: 12px 0 24px; }
+.faith-detail { border-block: 1px solid var(--faith-line); padding: 16px 0; }
+.faith-detail-heading { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.faith-detail-toggle { flex: 0 0 44px; background: none; border: 0; color: var(--faith-ink); min-height: 44px; padding: 0; cursor: pointer; }
+.faith-detail h2 { font-family: Georgia, 'Noto Serif TC', serif; font-size: 24px; font-weight: 500; margin: 0; }
+.faith-detail p { font-size: 14px; margin: 12px 0 0; }
+.faith-etiquette { padding: 16px 0; font-size: 14px; }
+.faith-etiquette summary { cursor: pointer; min-height: 44px; display: flex; align-items: center; gap: 10px; font-weight: 700; }
+.faith-etiquette summary::before { content: '+'; color: var(--faith-accent); }
+.faith-etiquette[open] summary::before { content: '−'; }
+.faith-etiquette p { margin: 0 0 8px; }
+.faith-button { min-height: 44px; padding: 8px 14px; background: transparent; border: 1px solid #b9af9d; color: var(--faith-ink); border-radius: 5px; cursor: pointer; }
+.faith-button-primary { background: var(--faith-accent); border-color: var(--faith-accent); color: white; }
+.faith-back { border: 0; padding-left: 0; }
+.faith-back span { margin-right: 6px; }
+.reflection-timer { border: 1px solid var(--faith-line); background: #ede7da; border-radius: 8px; padding: 18px; }
+.reflection-timer h2, .reflection-timer h3 { font-size: 16px; font-weight: 600; margin: 0 0 10px; }
+.reflection-timer p { font-size: 12px; }
+.reflection-timer button { margin: 3px; }
+.reflection-timer output { display: block; font-family: Georgia, serif; font-size: 38px; letter-spacing: .04em; margin: 10px 0; font-variant-numeric: tabular-nums; }
+.faith-location { border-top: 1px solid var(--faith-line); padding-top: 18px; margin-top: 22px; }
+.faith-location p:not(.faith-overline) { color: #706358; font-size: 12px; margin: 4px 0 0; }
+.faith-overlay :focus-visible { outline: 3px solid var(--faith-accent); outline-offset: 5px; }
+.faith-hotspot:focus-visible { outline-color: #fff; box-shadow: 0 0 0 8px var(--faith-accent); }
+.reflection-presets button[aria-pressed="true"] { background: var(--faith-ink); color: #fff; border-color: var(--faith-ink); }
+@media (max-width: 1000px) { .faith-exhibition { grid-template-columns: minmax(0, 1fr) 290px; gap: 24px; } .faith-scene { border-radius: 80px 80px 4px 4px; } }
+@media (max-width: 760px) {
+  .faith-dialog { padding-inline: max(16px, env(safe-area-inset-left)) max(16px, env(safe-area-inset-right)); }
+  .faith-header > .faith-overline { display: none; }
+  .faith-header { gap: 8px; }
+  .faith-title-row { display: block; padding: 22px 0 18px; }
+  .faith-scene-title { margin: 10px 0 0; font-size: 15px; }
+  .faith-exhibition { grid-template-columns: minmax(0, 1fr); gap: 24px; }
+  .faith-scene { border-radius: 70px 70px 4px 4px; }
+  .faith-hotspot { width: 44px; height: 44px; box-shadow: 0 0 0 4px #fff3; }
+  .faith-scene-guide { display: block; padding-top: 14px; }
+  .faith-scene-guide p { margin-top: 6px; }
+  .faith-art-caption { padding: 16px; font-size: 10px; }
+  .faith-info { border-radius: 20px 20px 0 0; background: #fbf8f1; padding: 24px 18px; }
+}
+@media (prefers-reduced-motion: reduce) { .faith-overlay *, .faith-overlay *::before, .faith-overlay *::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; } }

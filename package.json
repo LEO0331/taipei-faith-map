@@ -19,12 +19,14 @@
     "react-leaflet": "latest"
   },
   "devDependencies": {
+    "@testing-library/react": "^16.3.3",
     "@types/leaflet": "latest",
     "@types/leaflet.markercluster": "latest",
     "@types/node": "latest",
     "@types/react": "latest",
     "@types/react-dom": "latest",
     "@vitejs/plugin-react": "^6.0.2",
+    "jsdom": "^29.1.1",
     "tsx": "latest",
     "typescript": "latest",
     "vite": "^8.3.5",
