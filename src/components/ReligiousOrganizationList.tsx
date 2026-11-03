@@ -5,9 +5,10 @@ import { religionLabels, translations } from '../utils/i18n';
 type Props = {
   items: ReligiousOrganization[];
   language: Language;
+  onExplore: (organization: ReligiousOrganization) => void;
 };
 
-export function ReligiousOrganizationList({ items, language }: Props) {
+export function ReligiousOrganizationList({ items, language, onExplore }: Props) {
   const t = translations[language];
 
   return (
@@ -37,9 +38,12 @@ export function ReligiousOrganizationList({ items, language }: Props) {
                 </div>
               ) : null}
             </div>
-            <a href={getGoogleMapsUrl(item.latitude, item.longitude)} target="_blank" rel="noreferrer">
-              {t.openGoogleMaps}
-            </a>
+            <div className="record-actions">
+              <button className="primary-button" onClick={event => { event.currentTarget.focus(); onExplore(item); }}>{t.exploreFaithSpace}</button>
+              <a href={getGoogleMapsUrl(item.latitude, item.longitude)} target="_blank" rel="noreferrer">
+                {t.openGoogleMaps}
+              </a>
+            </div>
           </article>
         ))}
       </div>

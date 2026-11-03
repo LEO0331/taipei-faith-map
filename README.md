@@ -8,6 +8,16 @@ Mobile-first bilingual web app for exploring Taipei registered religious organiz
 
 This project provides a public map and lightweight dashboard for the "Taipei City Registered Religious Organizations Location Data" dataset. It is designed for browsing registered organization locations, filtering by district or religion type, checking festival-date text when available, and finding nearby registered organizations with browser geolocation.
 
+## Faith Spaces V1
+
+Choose **Explore Faith Space** in a map popup or organization record to open an illustrated cultural exhibition. Five original SVG scenes cover Taoism, Buddhism, Christianity, Catholicism and Islam; other classifications use a neutral gallery. Numbered hotspots, visitor etiquette and an optional 1/3/5-minute reflection timer support Chinese and English. Scenes describe architectural traditions, never the selected location's actual interior.
+
+The feature loads on demand. The map remains mounted underneath an inert background so filters, nearby results and the map view survive closing. Popup actions use escaped organization IDs and scoped, cleaned-up event delegation. Configuration and bilingual content live in `src/features/faith-spaces/faithSpaceConfig.ts`; artwork, modal, timer and feature CSS are adjacent. Reflection activity is never persisted or transmitted.
+
+DOM tests use the existing Vitest runner with `@testing-library/react` for accessible interaction queries and `jsdom` for document, focus and timer behavior; both are development-only dependencies. On Windows environments that restrict the system temp directory, set `TEMP` and `TMP` to an existing writable local directory before running `npm test`.
+
+V1.1 priorities: have tradition representatives review the educational copy, add reviewed introductions for more classifications, and extend real-device/screen-reader checks. The generic gallery intentionally remains available until dedicated content has been reviewed.
+
 ## Data Source
 
 - Source file: `臺北市已立案宗教團體點位資料.ods`
