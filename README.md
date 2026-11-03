@@ -16,7 +16,15 @@ The feature loads on demand. The map remains mounted underneath an inert backgro
 
 DOM tests use the existing Vitest runner with `@testing-library/react` for accessible interaction queries and `jsdom` for document, focus and timer behavior; both are development-only dependencies. On Windows environments that restrict the system temp directory, set `TEMP` and `TMP` to an existing writable local directory before running `npm test`.
 
-V1.1 priorities: have tradition representatives review the educational copy, add reviewed introductions for more classifications, and extend real-device/screen-reader checks. The generic gallery intentionally remains available until dedicated content has been reviewed.
+## Faith Spaces V1.1 — Cultural Discovery
+
+**Cultural Scene** retains free hotspot exploration and adds an optional **Guided Tour** through the same topics in configuration order. Previous, Next, completion, restart and exit controls are self-paced; changing language preserves the current step. Tour progress stays in React memory and is never stored or transmitted. **About This Place** separately shows source-backed facts about the selected location, with citations beside each introduction and fact, review dates and an explicit distinction from government registration data. Locations without a profile retain the cultural scene and a clear availability message.
+
+The initial profiles cover [Songshan Ciyou Temple](https://www.ssjyg.org.tw/About.aspx?View=11), [Bangka Lungshan Temple](https://whdo.gov.taipei/News_Content.aspx?n=2B790586BA4E1E7A&s=039849E84D5B9C7B&sms=15EB41D4C772E746), [Taipei Grand Mosque](https://www.taipeimosque.org.tw/guided.php?lang=tw), and [Zhongshan Presbyterian Church](https://www.sevenstar.org.tw/church/c02004/). Additional references accompany individual architectural facts. The neutral gallery now includes sourced introductory reading for I-Kuan Tao, the Bahá’í Faith and Tenrikyo; it does not invent buildings or religious symbols for them.
+
+Curated data lives in `placeProfiles.ts` and `traditionContent.ts` alongside the Faith Spaces components, separately from generated JSON. Profile lookup checks the organization ID **and** registered name, district and address; stale or ambiguous matches are withheld. Offline Vitest validation checks nonempty bilingual content, per-claim evidence, source metadata and HTTP(S) URLs, review dates and unique mappings against the current dataset. Source links reject unsafe destinations. All cultural content remains within the lazy-loaded feature.
+
+The release records internal source checking, not religious-community approval. See the [bilingual cultural-content contributor guide](docs/cultural-content.md) for the editorial workflow, source inventory and instructions for adding profiles. Catholic church profiles are deferred because examined dataset records describe orders or offices rather than safely matched church buildings. Ambient audio is deferred because no suitable licensed asset was verified. V1.2 priorities include external cultural review, additional verified profiles and real-device/screen-reader evaluation; no unperformed accessibility or community review is claimed.
 
 ## Data Source
 
