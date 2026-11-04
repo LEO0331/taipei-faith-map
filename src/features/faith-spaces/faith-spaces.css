@@ -59,8 +59,64 @@
 .faith-overlay :focus-visible { outline: 3px solid var(--faith-accent); outline-offset: 5px; }
 .faith-hotspot:focus-visible { outline-color: #fff; box-shadow: 0 0 0 8px var(--faith-accent); }
 .reflection-presets button[aria-pressed="true"] { background: var(--faith-ink); color: #fff; border-color: var(--faith-ink); }
+.faith-overlay [hidden] { display: none !important; }
+.faith-content-navigation, .faith-exploration-modes { display: flex; flex-wrap: wrap; gap: 8px; }
+.faith-content-navigation { padding-bottom: 24px; }
+.faith-content-navigation .faith-button { border-color: var(--faith-line); }
+.faith-content-navigation [aria-pressed="true"] { background: var(--faith-ink); color: #fff; border-color: var(--faith-ink); }
+.faith-exploration-modes { margin: 10px 0 14px; }
+.faith-exploration-modes .faith-button { font-size: 13px; }
+.faith-exploration-modes [aria-pressed="true"] { background: var(--faith-accent); color: #fff; border-color: var(--faith-accent); }
+.faith-art-panel { position: sticky; top: 88px; }
+.faith-art-label { margin-bottom: 8px; }
+.faith-hotspot.is-selected { outline: 2px solid #fff5e9; outline-offset: 3px; }
+.faith-hotspot:hover { box-shadow: 0 0 0 9px #ffffff59, 0 3px 12px #0003; }
+.faith-tour-controls { padding: 16px; background: #eae3d5; border-radius: 0 0 8px 8px; }
+.faith-tour-progress { display: flex; justify-content: space-between; gap: 12px; font-size: 12px; color: var(--faith-ink); }
+.faith-tour-track { height: 3px; margin: 12px 0; background: #c9bfad; }
+.faith-tour-track span { display: block; height: 100%; background: var(--faith-accent); transition: width .2s ease; }
+.faith-tour-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.faith-tour-actions .faith-button { font-size: 13px; }
+.faith-tour-exit { margin-left: auto; }
+.faith-overlay button:disabled { opacity: .5; cursor: default; }
+.faith-detail { min-block-size: 24rem; }
+.faith-step-label { color: var(--faith-accent); font-weight: 700; margin-bottom: 12px !important; }
+.place-profile h2, .faith-tradition h2 { font-family: Georgia, 'Noto Serif TC', serif; font-weight: 500; font-size: 26px; line-height: 1.4; margin: 8px 0 16px; }
+.place-profile p, .faith-tradition p { font-size: 14px; line-height: 1.85; }
+.place-fact { border-top: 1px solid var(--faith-line); margin-top: 24px; padding-top: 18px; }
+.place-fact h3, .faith-tradition h3 { font-size: 18px; font-weight: 600; line-height: 1.5; margin: 0 0 10px; }
+.cultural-sources { background: #eee8dd; border-left: 2px solid var(--faith-accent); padding: 12px 14px; margin: 14px 0; }
+.cultural-sources h4 { margin: 0 0 8px; font-size: 11px; letter-spacing: .05em; color: var(--faith-accent); }
+.cultural-sources ul { padding: 0; margin: 0; list-style: none; }
+.cultural-sources li + li { margin-top: 12px; }
+.cultural-sources a { color: var(--faith-accent); font-size: 13px; line-height: 1.7; text-decoration: underline; text-underline-offset: 3px; display: inline-block; padding-block: 8px; overflow-wrap: anywhere; }
+.cultural-sources .cultural-source-meta { font-size: 11px; color: #706358; line-height: 1.7; margin: 3px 0 0; overflow-wrap: anywhere; }
+.faith-review-note { color: #706358; font-size: 12px; border-top: 1px solid var(--faith-line); margin-top: 20px; padding-top: 12px; }
+.faith-review-note p, p.faith-review-note { font-size: 12px; }
+.faith-open-data { margin-top: 28px; border-top: 1px solid var(--faith-line); padding-top: 20px; }
+.faith-open-data h3 { font-size: 14px; }
+.faith-open-data dl { display: grid; gap: 12px; font-size: 13px; line-height: 1.7; }
+.faith-open-data dl > div { display: grid; gap: 2px; }
+.faith-open-data dt { color: #706358; font-size: 11px; }
+.faith-open-data dd { margin: 0; overflow-wrap: anywhere; }
+.faith-tradition { margin-top: 20px; padding-top: 12px; border-top: 1px solid var(--faith-line); }
+@media (min-width: 761px) {
+  .is-guided .faith-scene { width: min(100%, 78vh); margin-inline: auto; }
+  .is-guided .faith-exploration-modes { display: none; }
+}
 @media (max-width: 1000px) { .faith-exhibition { grid-template-columns: minmax(0, 1fr) 290px; gap: 24px; } .faith-scene { border-radius: 80px 80px 4px 4px; } }
 @media (max-width: 760px) {
+  .faith-art-panel { position: static; }
+  .is-guided .faith-art-panel { position: sticky; top: 60px; z-index: 3; background: #f6f2e9; padding-bottom: 8px; }
+  .is-guided .faith-art-label, .is-guided .faith-exploration-modes, .is-guided .faith-scene-guide { display: none; }
+  .is-guided .faith-introduction { display: none; }
+  .is-guided .faith-scene { max-height: 28vh; aspect-ratio: 3 / 2; width: auto; margin-inline: auto; }
+  .is-guided .faith-illustration { height: 100%; }
+  .faith-tour-controls { padding: 12px; }
+  .faith-tour-exit { margin-left: 0; }
+  .faith-tour-actions .faith-button { flex: 1 1 auto; padding-inline: 10px; font-size: 12px; }
+  .faith-content-navigation { gap: 6px; padding-bottom: 16px; }
+  .faith-content-navigation .faith-button { flex: 1 1 auto; font-size: 13px; padding-inline: 10px; }
   .faith-dialog { padding-inline: max(16px, env(safe-area-inset-left)) max(16px, env(safe-area-inset-right)); }
   .faith-header > .faith-overline { display: none; }
   .faith-header { gap: 8px; }

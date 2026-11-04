@@ -5,6 +5,9 @@ import { religionLabels } from '../../utils/i18n';
 import { getFaithSpaceConfig } from './faithSpaceConfig';
 import { FaithSpaceIllustration } from './FaithSpaceIllustration';
 import { ReflectionTimer } from './ReflectionTimer';
+import { GuidedTourControls, tourLabels } from './GuidedTourControls';
+import { PlaceProfilePanel } from './PlaceProfilePanel';
+import { TraditionIntroduction } from './TraditionIntroduction';
 import './faith-spaces.css';
 
 type Props = {
@@ -21,6 +24,8 @@ const labels = {
     instructions: '選擇畫面上的編號，認識空間裡的文化細節。',
     general: '文化導覽 · 一般性介紹', etiquette: '參訪禮儀', facts: '公開資料 · 此場所',
     collapse: '收合說明', expand: '展開說明', count: '探索細節',
+    scene: '文化示意', place: '認識這個場所', navigation: '探索內容',
+    tourInstructions: '依序探索文化細節。點選任一熱點，或退出導覽，即可回到自由探索。',
   },
   en: {
     exhibition: 'FAITH SPACES · CULTURAL EXPLORATION', back: 'Return to map', close: 'Close Faith Space',
@@ -28,6 +33,8 @@ const labels = {
     instructions: 'Choose a numbered point to discover the cultural details of this space.',
     general: 'CULTURAL GUIDE · GENERAL INTRODUCTION', etiquette: 'Visitor etiquette', facts: 'OPEN DATA · THIS LOCATION',
     collapse: 'Collapse information', expand: 'Expand information', count: 'Details to explore',
+    scene: 'Cultural Scene', place: 'About This Place', navigation: 'Explore content',
+    tourInstructions: 'Explore details in order. Select any hotspot or exit the tour to return to Free Exploration.',
   },
 };
 
@@ -35,13 +42,42 @@ export default function FaithSpaceModal({ organization, language, onLanguageChan
   const config = getFaithSpaceConfig(organization.religion);
   const [selectedId, setSelectedId] = useState(config.hotspots[0].id);
   const [expanded, setExpanded] = useState(true);
+  const [panel, setPanel] = useState<'scene' | 'place'>('scene');
+  const [guided, setGuided] = useState(false);
+  const [completed, setCompleted] = useState(false);
   const dialog = useRef<HTMLDivElement>(null);
   const closeButton = useRef<HTMLButtonElement>(null);
+  const freeModeButton = useRef<HTMLButtonElement>(null);
+  const tourNextButton = useRef<HTMLButtonElement>(null);
+  const previouslyGuided = useRef(false);
   const headingId = useId();
   const descriptionId = useId();
   const panelId = useId();
+  const topicId = useId();
+  const topicBodyId = useId();
+  const contentPanelId = useId();
   const t = labels[language];
   const selected = config.hotspots.find(hotspot => hotspot.id === selectedId) ?? config.hotspots[0];
+  const selectedIndex = config.hotspots.indexOf(selected);
+  const tour = tourLabels[language];
+  const startTour = () => {
+    setSelectedId(config.hotspots[0].id);
+    setExpanded(true);
+    setCompleted(false);
+    setGuided(true);
+    setPanel('scene');
+  };
+  const goTo = (index: number) => {
+    setSelectedId(config.hotspots[Math.max(0, Math.min(config.hotspots.length - 1, index))].id);
+    setExpanded(true);
+    setCompleted(false);
+  };
+
+  useEffect(() => {
+    if (guided) tourNextButton.current?.focus({ preventScroll: true });
+    else if (previouslyGuided.current && document.activeElement === document.body) freeModeButton.current?.focus({ preventScroll: true });
+    previouslyGuided.current = guided;
+  }, [guided]);
 
   useEffect(() => {
     const previousOverflow = document.body.style.overflow;
@@ -79,37 +115,58 @@ export default function FaithSpaceModal({ organization, language, onLanguageChan
           <p className="faith-scene-title">{config.title[language]}</p>
         </div>
         <p className="faith-disclaimer" id={descriptionId}>{t.disclaimer}</p>
-        <div className="faith-exhibition">
+        <nav className="faith-content-navigation" aria-label={t.navigation}>
+          <button className="faith-button" aria-pressed={panel === 'scene'} aria-controls={contentPanelId} onClick={() => setPanel('scene')}>{t.scene}</button>
+          <button className="faith-button" aria-pressed={panel === 'place'} aria-controls={contentPanelId} onClick={() => setPanel('place')}>{t.place}</button>
+        </nav>
+        <div className={`faith-exhibition${guided && panel === 'scene' ? ' is-guided' : ''}`}>
           <section className="faith-art-panel" aria-label={config.title[language]}>
+            <p className="faith-overline faith-art-label">{t.scene}</p>
+            <div className="faith-exploration-modes" role="group" aria-label={tour.title} hidden={panel !== 'scene'}>
+              <button ref={freeModeButton} className="faith-button" aria-pressed={!guided} onClick={() => { setGuided(false); setCompleted(false); }}>{tour.free}</button>
+              <button className="faith-button" aria-pressed={guided} onClick={startTour}>{tour.title}</button>
+            </div>
             <div className="faith-scene">
               <FaithSpaceIllustration scene={config.id} />
               {config.hotspots.map((hotspot, index) => (
                 <button key={hotspot.id} className={`faith-hotspot${selected.id === hotspot.id ? ' is-selected' : ''}`}
                   style={{ left: `${hotspot.x}%`, top: `${hotspot.y}%` }}
                   aria-label={hotspot.title[language]} aria-pressed={selected.id === hotspot.id} aria-controls={panelId}
-                  onClick={() => { setSelectedId(hotspot.id); setExpanded(true); }}>
+                  aria-describedby={selected.id === hotspot.id && panel === 'scene' ? topicBodyId : undefined}
+                  title={hotspot.title[language]}
+                  onClick={() => { setGuided(false); setCompleted(false); setPanel('scene'); setSelectedId(hotspot.id); setExpanded(true); }}>
                   <span aria-hidden="true">{String(index + 1).padStart(2, '0')}</span>
                 </button>
               ))}
-              <div className="faith-art-caption"><span>{config.title[language]}</span><span>01 — 03</span></div>
+              <div className="faith-art-caption"><span>{config.title[language]}</span><span>{String(selectedIndex + 1).padStart(2, '0')} / {String(config.hotspots.length).padStart(2, '0')}</span></div>
             </div>
-            <div className="faith-scene-guide"><span className="faith-overline">{t.count}</span><p>{t.instructions}</p></div>
+            {guided && panel === 'scene' && <GuidedTourControls language={language} index={selectedIndex} total={config.hotspots.length} completed={completed}
+              nextButtonRef={tourNextButton}
+              onPrevious={() => goTo(completed ? selectedIndex : selectedIndex - 1)}
+              onNext={() => selectedIndex === config.hotspots.length - 1 ? setCompleted(true) : goTo(selectedIndex + 1)}
+              onExit={() => { setGuided(false); setCompleted(false); }} onRestart={startTour} />}
+            <div className="faith-scene-guide"><span className="faith-overline">{t.count}</span><p>{guided ? t.tourInstructions : t.instructions}</p></div>
           </section>
-          <aside className="faith-info">
+          <aside className="faith-info" id={contentPanelId} aria-label={panel === 'scene' ? t.scene : t.place}>
+            <section hidden={panel !== 'scene'} aria-label={t.scene}>
             <p className="faith-overline">{t.general}</p>
             <p className="faith-introduction">{config.introduction[language]}</p>
-            <div className="faith-detail" id={panelId}>
+            <div className="faith-detail" id={panelId} role="region" aria-labelledby={topicId} aria-live="polite" aria-atomic="true">
+              {guided && <p className="faith-step-label">{completed ? tour.complete : tour.progress(selectedIndex + 1, config.hotspots.length)}</p>}
               <div className="faith-detail-heading">
-                <h2>{selected.title[language]}</h2>
+                <h2 id={topicId}>{selected.title[language]}</h2>
                 <button className="faith-detail-toggle" aria-expanded={expanded} onClick={() => setExpanded(value => !value)} aria-label={expanded ? t.collapse : t.expand}>
                   <span aria-hidden="true">{expanded ? '−' : '+'}</span>
                 </button>
               </div>
-              <div hidden={!expanded} aria-live="polite"><p>{selected.body[language]}</p></div>
+              <div hidden={!expanded}><p id={topicBodyId}>{selected.body[language]}</p></div>
             </div>
+            <TraditionIntroduction religion={organization.religion} language={language} />
             <details className="faith-etiquette"><summary>{t.etiquette}</summary><p>{config.etiquette[language]}</p></details>
             <ReflectionTimer language={language} />
             <div className="faith-location"><p className="faith-overline">{t.facts}</p><p>{organization.district}{organization.village ? ` · ${organization.village}` : ''}</p><p>{organization.address}</p></div>
+            </section>
+            {panel === 'place' && <PlaceProfilePanel organization={organization} language={language} />}
           </aside>
         </div>
       </div>
