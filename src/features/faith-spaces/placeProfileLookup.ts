@@ -1,46 +1,7 @@
 import type { ReligiousOrganization } from '../../types';
-import { getSafeSourceUrl } from './culturalSources';
 import { placeProfiles } from './placeProfiles';
-import type { LocalizedText, PlaceProfile, SourceReference, TraditionContent, VerifiedFact } from './placeProfileTypes';
-
-const normalizeIdentity = (value: string) => typeof value === 'string' ? value.normalize('NFC').trim().replace(/\s+/gu, ' ') : '';
-const nonempty = (value: unknown): value is string => typeof value === 'string' && value.trim().length > 0;
-
-function matchesIdentity(profile: PlaceProfile, organization: ReligiousOrganization) {
-  return normalizeIdentity(profile.organizationName) === normalizeIdentity(organization.name)
-    && normalizeIdentity(profile.district) === normalizeIdentity(organization.district)
-    && normalizeIdentity(profile.address) === normalizeIdentity(organization.address);
-}
-
-function validDate(value: string) {
-  if (!/^\d{4}-\d{2}-\d{2}$/u.test(value)) return false;
-  const date = new Date(`${value}T00:00:00Z`);
-  return Number.isFinite(date.getTime()) && date.toISOString().slice(0, 10) === value;
-}
-
-function checkLocalized(value: LocalizedText, path: string, errors: string[]) {
-  for (const language of ['zh', 'en'] as const) {
-    if (!nonempty(value?.[language])) errors.push(`${path}.${language} must be nonempty`);
-  }
-}
-
-function checkSources(sources: SourceReference[], path: string, errors: string[]) {
-  if (!Array.isArray(sources) || sources.length === 0) {
-    errors.push(`${path} must include source references`);
-    return;
-  }
-  const ids = new Set<string>();
-  for (const [index, source] of sources.entries()) {
-    const sourcePath = `${path}[${index}]`;
-    if (!nonempty(source.id)) errors.push(`${sourcePath}.id must be nonempty`);
-    else if (ids.has(source.id)) errors.push(`${sourcePath}.id duplicates a source reference`);
-    ids.add(source.id);
-    checkLocalized(source.title, `${sourcePath}.title`, errors);
-    if (!nonempty(source.publisher)) errors.push(`${sourcePath}.publisher must be nonempty`);
-    if (!getSafeSourceUrl(source.url)) errors.push(`${sourcePath}.url must be a safe absolute HTTP(S) URL`);
-    if (!validDate(source.verifiedAt)) errors.push(`${sourcePath}.verifiedAt must be a valid YYYY-MM-DD date`);
-  }
-}
+import type { PlaceProfile, TraditionContent, VerifiedFact } from './placeProfileTypes';
+import { matchesOrganizationDetails as matchesIdentity, nonempty, checkLocalized, checkSources, checkEditorial } from '../../utils/curatedContent';
 
 function checkFacts(facts: VerifiedFact[], path: string, errors: string[]) {
   if (!Array.isArray(facts) || facts.length === 0) {
@@ -56,13 +17,6 @@ function checkFacts(facts: VerifiedFact[], path: string, errors: string[]) {
     checkLocalized(fact.title, `${factPath}.title`, errors);
     checkLocalized(fact.description, `${factPath}.description`, errors);
     checkSources(fact.sources, `${factPath}.sources`, errors);
-  }
-}
-
-function checkEditorial(content: Pick<PlaceProfile, 'lastReviewed' | 'editorialReviewStatus'>, path: string, errors: string[]) {
-  if (!validDate(content.lastReviewed)) errors.push(`${path}.lastReviewed must be a valid YYYY-MM-DD date`);
-  if (!['internal-reviewed', 'community-reviewed', 'pending'].includes(content.editorialReviewStatus)) {
-    errors.push(`${path}.editorialReviewStatus must be explicit`);
   }
 }
 

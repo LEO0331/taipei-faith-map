@@ -5,12 +5,18 @@ import { MapContainer, TileLayer, useMap } from 'react-leaflet';
 import type { Language, ReligiousOrganization } from '../types';
 import { getGoogleMapsUrl } from '../utils/geo';
 import { religionLabels, translations } from '../utils/i18n';
+import { CulturalRouteMapLayer, hasUsableMapCoordinates } from '../features/cultural-routes/CulturalRouteMapLayer';
 
 type Props = {
   items: ReligiousOrganization[];
   language: Language;
   onExplore: (organization: ReligiousOrganization, restoreFocus?: () => void) => void;
   userLocation?: { latitude: number; longitude: number };
+  routeStops?: ReligiousOrganization[];
+  selectedRouteStopId?: string;
+  onRouteStopSelect?: (organizationId: string) => void;
+  focusRequest?: { organization: ReligiousOrganization; token: number };
+  visible?: boolean;
 };
 
 const TAIPEI_CENTER: [number, number] = [25.0478, 121.5319];
@@ -31,7 +37,9 @@ const religionColors: Record<string, string> = {
   未分類: '#374151',
 };
 
-export function ReligiousOrganizationMap({ items, language, userLocation, onExplore }: Props) {
+export function ReligiousOrganizationMap({ items, language, userLocation, onExplore, routeStops, selectedRouteStopId, onRouteStopSelect, focusRequest, visible = true }: Props) {
+  const routeActive = !!routeStops && routeStops.length >= 2 && routeStops.every(hasUsableMapCoordinates)
+    && new Set(routeStops.map(stop => stop.id)).size === routeStops.length;
   return (
     <div className="map-shell">
       <MapContainer center={TAIPEI_CENTER} zoom={12} scrollWheelZoom className="map">
@@ -39,19 +47,25 @@ export function ReligiousOrganizationMap({ items, language, userLocation, onExpl
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
         />
-        <ClusteredMarkers items={items} language={language} onExplore={onExplore} />
+        <ClusteredMarkers items={items} language={language} onExplore={onExplore} hidden={routeActive} />
         <UserLocationMarker location={userLocation} language={language} />
+        <CulturalRouteMapLayer stops={routeActive ? routeStops : undefined} selectedStopId={selectedRouteStopId} language={language} onSelectStop={onRouteStopSelect} />
+        <FocusedOrganizationMarker request={routeActive ? undefined : focusRequest} language={language} onExplore={onExplore} />
+        <MapVisibility visible={visible} />
       </MapContainer>
-      <MapLegend language={language} />
+      {routeActive
+        ? <p className="route-marker-legend">{language === 'zh' ? '編號表示停靠順序，並非實際步行路徑。' : 'Numbers show stop order, not an actual walking path.'}</p>
+        : <MapLegend language={language} />}
     </div>
   );
 }
 
-function ClusteredMarkers({ items, language, onExplore }: Pick<Props, 'items' | 'language' | 'onExplore'>) {
+function ClusteredMarkers({ items, language, onExplore, hidden }: Pick<Props, 'items' | 'language' | 'onExplore'> & { hidden?: boolean }) {
   const map = useMap();
   const markersById = useRef(new Map<string, L.Marker>());
 
   useEffect(() => {
+    if (hidden) return;
     const cluster = L.markerClusterGroup({
       chunkedLoading: true,
       maxClusterRadius: 48,
@@ -102,8 +116,69 @@ function ClusteredMarkers({ items, language, onExplore }: Pick<Props, 'items' | 
       if (markersById.current === markers) markersById.current = new Map();
       map.removeLayer(cluster);
     };
-  }, [items, language, map, onExplore]);
+  }, [items, language, map, onExplore, hidden]);
 
+  return null;
+}
+
+function MapVisibility({ visible }: { visible: boolean }) {
+  const map = useMap();
+  useEffect(() => {
+    if (!visible) return;
+    const frame = requestAnimationFrame(() => map.invalidateSize({ pan: false }));
+    return () => cancelAnimationFrame(frame);
+  }, [map, visible]);
+  return null;
+}
+
+function FocusedOrganizationMarker({ request, language, onExplore }: { request?: Props['focusRequest']; language: Language; onExplore: Props['onExplore'] }) {
+  const map = useMap();
+  const markerRef = useRef<L.Marker | undefined>(undefined);
+  const lastViewRequest = useRef<number | undefined>(undefined);
+  const lastFocusRequest = useRef<number | undefined>(undefined);
+  const organization = request?.organization;
+  const token = request?.token;
+
+  useEffect(() => {
+    if (!organization || !hasUsableMapCoordinates(organization)) return;
+    const marker = L.marker([organization.latitude, organization.longitude], { icon: createMarkerIcon(organization.religion), title: organization.name, keyboard: true });
+    markerRef.current = marker;
+    marker.addTo(map);
+    if (token !== lastViewRequest.current) {
+      map.invalidateSize({ pan: false });
+      map.setView([organization.latitude, organization.longitude], Math.max(map.getZoom(), 15), { animate: false });
+      lastViewRequest.current = token;
+    }
+    return () => {
+      marker.removeFrom(map);
+      if (markerRef.current === marker) markerRef.current = undefined;
+    };
+  }, [map, organization, token]);
+
+  useEffect(() => {
+    const marker = markerRef.current;
+    if (!organization || !marker) return;
+    const content = document.createElement('div');
+    content.innerHTML = renderPopup(organization, language);
+    const button = content.querySelector<HTMLButtonElement>('button[data-faith-organization]');
+    const openSpace = (event: MouseEvent) => {
+      // The ordinary clustered-popup bridge is not involved in this dedicated marker.
+      event.stopPropagation();
+      button?.focus();
+      onExplore(organization, () => {
+        const currentMarker = markerRef.current;
+        currentMarker?.openPopup();
+        currentMarker?.getPopup()?.getElement()?.querySelector<HTMLButtonElement>('button[data-faith-organization]')?.focus({ preventScroll: true });
+      });
+    };
+    button?.addEventListener('click', openSpace);
+    marker.bindPopup(content, { maxWidth: 280, autoPan: false }).openPopup();
+    if (token !== lastFocusRequest.current) {
+      button?.focus({ preventScroll: true });
+      lastFocusRequest.current = token;
+    }
+    return () => { button?.removeEventListener('click', openSpace); };
+  }, [organization, language, onExplore, token]);
   return null;
 }
 
