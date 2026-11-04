@@ -13,6 +13,7 @@ import { LanguageToggle } from './components/LanguageToggle';
 import { NearbyPanel } from './components/NearbyPanel';
 import { ReligiousOrganizationList } from './components/ReligiousOrganizationList';
 import { ReligiousOrganizationMap } from './components/ReligiousOrganizationMap';
+import type { MapFocusRequest } from './components/ReligiousOrganizationMap';
 import { ExplorationBoundary } from './components/ExplorationBoundary';
 import type { ResolvedCulturalRoute } from './features/cultural-routes/routeTypes';
 import { FaithSpaceBoundary, FaithSpaceStatus } from './features/faith-spaces/FaithSpaceLoader';
@@ -25,11 +26,13 @@ const radiusOptions = [500, 1000, 2000, 5000];
 const FaithSpaceModal = lazy(() => import('./features/faith-spaces/FaithSpaceModal'));
 const ReligiousCalendar = lazy(() => import('./features/religious-calendar/ReligiousCalendar'));
 const CulturalRoutes = lazy(() => import('./features/cultural-routes/CulturalRoutesPanel'));
-type ExplorationMode = 'map' | 'calendar' | 'routes';
+const HeritageExplorer = lazy(() => import('./features/heritage/HeritageExplorer'));
+type ExplorationMode = 'map' | 'calendar' | 'routes' | 'heritage';
+type HeritageReturnContext = { control: HTMLElement | null; kind: 'map' | 'route'; previousRoute?: ResolvedCulturalRoute; previousStopId?: string };
 
 const explorationLabels = {
-  zh: { navigation: '探索台北信仰文化', map: '地圖', calendar: '行事曆', routes: '散步路線', loading: '載入探索內容…', focused: '地圖查看：', clearFocus: '取消場所標示', routeMap: '路線停靠點地圖', ordinaryMap: '宗教團體地圖', overview: '目前的地圖篩選已保留，路線停靠點獨立顯示。', viewRouteMap: '查看路線地圖', readStop: '閱讀此站文化介紹', selectedStop: '目前停留點' },
-  en: { navigation: 'Explore Taipei faith and culture', map: 'Map', calendar: 'Calendar', routes: 'Walking Routes', loading: 'Loading discovery content…', focused: 'Viewing on map: ', clearFocus: 'Clear place highlight', routeMap: 'Route stop map', ordinaryMap: 'Religious organizations map', overview: 'Your map filters are preserved. Route stops are shown independently.', viewRouteMap: 'View route map', readStop: 'Read this stop’s cultural details', selectedStop: 'Selected stop' },
+  zh: { navigation: '探索台北信仰文化', map: '地圖', calendar: '行事曆', routes: '散步路線', heritage: '歷史與故事', loading: '載入探索內容…', focused: '地圖查看：', clearFocus: '取消場所標示', routeMap: '路線停靠點地圖', ordinaryMap: '宗教團體地圖', overview: '目前的地圖篩選已保留，路線停靠點獨立顯示。', viewRouteMap: '查看路線地圖', readStop: '閱讀此站文化介紹', selectedStop: '目前停留點', returnHeritage: '返回歷史與故事', currentLocations: '目前登記位置，並非經查證的歷史座標。', routeUnavailable: '相關路線目前無法載入或核對，請稍後再試。' },
+  en: { navigation: 'Explore Taipei faith and culture', map: 'Map', calendar: 'Calendar', routes: 'Walking Routes', heritage: 'History & Stories', loading: 'Loading discovery content…', focused: 'Viewing on map: ', clearFocus: 'Clear place highlight', routeMap: 'Route stop map', ordinaryMap: 'Religious organizations map', overview: 'Your map filters are preserved. Route stops are shown independently.', viewRouteMap: 'View route map', readStop: 'Read this stop’s cultural details', selectedStop: 'Selected stop', returnHeritage: 'Return to History & Stories', currentLocations: 'Current registered locations, not verified historical coordinates.', routeUnavailable: 'The related route could not be loaded or verified. Please try again later.' },
 };
 
 export function App() {
@@ -41,11 +44,16 @@ export function App() {
   const [nearbyError, setNearbyError] = useState<string>();
   const [dataLoadError, setDataLoadError] = useState(false);
   const [selectedOrganization, setSelectedOrganization] = useState<ReligiousOrganization>();
+  const [faithSpacePanel, setFaithSpacePanel] = useState<'scene' | 'place'>('scene');
   const [mode, setMode] = useState<ExplorationMode>('map');
-  const [visited, setVisited] = useState({ calendar: false, routes: false });
+  const [visited, setVisited] = useState({ calendar: false, routes: false, heritage: false });
   const [selectedRoute, setSelectedRoute] = useState<ResolvedCulturalRoute>();
   const [selectedRouteStopId, setSelectedRouteStopId] = useState<string>();
-  const [focusRequest, setFocusRequest] = useState<{ organization: ReligiousOrganization; token: number }>();
+  const [focusRequest, setFocusRequest] = useState<MapFocusRequest>();
+  const heritageReturn = useRef<HeritageReturnContext | undefined>(undefined);
+  const [hasHeritageReturn, setHasHeritageReturn] = useState(false);
+  const [heritageRouteError, setHeritageRouteError] = useState(false);
+  const heritageRouteRequest = useRef(0);
   const focusSequence = useRef(0);
   const workspaceRef = useRef<HTMLElement>(null);
   const mapPanelRef = useRef<HTMLDivElement>(null);
@@ -54,17 +62,36 @@ export function App() {
     setSelectedRoute(route);
     setSelectedRouteStopId(route?.organizations[0]?.id);
   }, []);
+  const returnToHeritage = useCallback(() => {
+    const context = heritageReturn.current;
+    heritageReturn.current = undefined;
+    setHasHeritageReturn(false);
+    setFocusRequest(undefined);
+    if (context?.kind === 'route') {
+      setSelectedRoute(context.previousRoute);
+      setSelectedRouteStopId(context.previousStopId);
+    }
+    setMode('heritage');
+    requestAnimationFrame(() => context?.control?.isConnected && context.control.focus());
+  }, []);
   const navigate = useCallback((nextMode: ExplorationMode) => {
+    ++heritageRouteRequest.current;
+    setHeritageRouteError(false);
+    if (nextMode === 'heritage' && heritageReturn.current) { returnToHeritage(); return; }
+    if (heritageReturn.current) setFocusRequest(undefined);
+    heritageReturn.current = undefined;
+    setHasHeritageReturn(false);
     setMode(nextMode);
     if (nextMode !== 'map') setFocusRequest(undefined);
     if (nextMode !== 'map') setVisited(current => ({ ...current, [nextMode]: true }));
-  }, []);
+  }, [returnToHeritage]);
   const viewOnMap = useCallback((organization: ReligiousOrganization) => {
     setMode('map');
     setFocusRequest({ organization, token: ++focusSequence.current });
     requestAnimationFrame(() => workspaceRef.current?.scrollIntoView?.({ block: 'start' }));
   }, []);
   const exitRoute = useCallback(() => {
+    if (heritageReturn.current?.kind === 'route') { returnToHeritage(); return; }
     setSelectedRoute(undefined);
     setSelectedRouteStopId(undefined);
     setMode('map');
@@ -72,11 +99,38 @@ export function App() {
       mapPanelRef.current?.scrollIntoView?.({ block: 'start' });
       mapPanelRef.current?.focus({ preventScroll: true });
     });
+  }, [returnToHeritage]);
+  const viewHeritagePlaces = useCallback((places: ReligiousOrganization[]) => {
+    if (!places.length) return;
+    ++heritageRouteRequest.current;
+    heritageReturn.current = { control: document.activeElement instanceof HTMLElement ? document.activeElement : null, kind: 'map' };
+    setHasHeritageReturn(true);
+    setFocusRequest({ organization: places[0], relatedOrganizations: places.slice(1), token: ++focusSequence.current, temporary: true });
+    setMode('map');
+    requestAnimationFrame(() => mapPanelRef.current?.scrollIntoView?.({ block: 'start' }));
   }, []);
+  const openHeritageRoute = useCallback(async (routeId: string) => {
+    const request = ++heritageRouteRequest.current;
+    const control = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+    setHeritageRouteError(false);
+    try {
+      const { getAvailableRoutes } = await import('./features/cultural-routes/routeLookup');
+      if (request !== heritageRouteRequest.current) return;
+      const route = getAvailableRoutes(organizations).find(item => item.route.id === routeId);
+      if (!route) { setHeritageRouteError(true); return; }
+      heritageReturn.current = { control, kind: 'route', previousRoute: selectedRoute, previousStopId: selectedRouteStopId };
+      setHasHeritageReturn(true);
+      selectRoute(route);
+      setVisited(current => ({ ...current, routes: true }));
+      setMode('routes');
+    } catch { if (request === heritageRouteRequest.current) setHeritageRouteError(true); }
+  }, [organizations, selectedRoute, selectedRouteStopId, selectRoute]);
   const returnFocus = useRef<(() => void) | undefined>(undefined);
-  const openFaithSpace = useCallback((organization: ReligiousOrganization, restoreFocus?: () => void) => {
+  const openFaithSpace = useCallback((organization: ReligiousOrganization, restoreFocus?: () => void, panel: 'scene' | 'place' = 'scene') => {
+    ++heritageRouteRequest.current;
     const invokingControl = document.activeElement instanceof HTMLElement ? document.activeElement : null;
     returnFocus.current = restoreFocus ?? (() => invokingControl?.focus({ preventScroll: true }));
+    setFaithSpacePanel(panel);
     setSelectedOrganization(organization);
   }, []);
   const closeFaithSpace = useCallback(() => {
@@ -186,17 +240,29 @@ export function App() {
       </header>
 
       <nav className="discovery-navigation" aria-label={discovery.navigation}>
-        {(['map', 'calendar', 'routes'] as const).map(item => <button key={item} type="button" aria-current={mode === item ? 'page' : undefined} onClick={() => navigate(item)}>{discovery[item]}</button>)}
+        {(['map', 'calendar', 'routes', 'heritage'] as const).map(item => <button key={item} type="button" aria-current={mode === item ? 'page' : undefined} onClick={() => navigate(item)}>{discovery[item]}</button>)}
       </nav>
 
       <main>
         {dataLoadError ? <p className="status-text">{t.dataLoadError}</p> : null}
+        {hasHeritageReturn && (mode === 'map' || mode === 'routes') && <div className="heritage-return-banner">
+          <div>{focusRequest?.temporary && <p>{discovery.currentLocations}</p>}</div>
+          <button className="text-button" onClick={returnToHeritage}>{discovery.returnHeritage}</button>
+        </div>}
+        {visited.heritage && <div hidden={mode !== 'heritage'} className="heritage-workspace">
+          {heritageRouteError && <p role="alert">{discovery.routeUnavailable}</p>}
+          <ExplorationBoundary language={language} onReturnMap={() => navigate('map')}>
+            <Suspense fallback={<p role="status">{discovery.loading}</p>}><HeritageExplorer organizations={organizations} language={language}
+              onViewMap={viewHeritagePlaces} onExplore={openFaithSpace} onOpenProfile={organization => openFaithSpace(organization, undefined, 'place')}
+              onOpenRoute={openHeritageRoute} /></Suspense>
+          </ExplorationBoundary>
+        </div>}
         {visited.calendar && <div hidden={mode !== 'calendar'} className="calendar-workspace">
           <ExplorationBoundary language={language} onReturnMap={() => navigate('map')}>
             <Suspense fallback={<p role="status">{discovery.loading}</p>}><ReligiousCalendar organizations={organizations} language={language} onViewMap={viewOnMap} onExplore={openFaithSpace} /></Suspense>
           </ExplorationBoundary>
         </div>}
-        <section className={`workspace${mode === 'routes' ? ' route-workspace' : ''}`} hidden={mode === 'calendar'} aria-label={t.appTitle} ref={workspaceRef}>
+        <section className={`workspace${mode === 'routes' ? ' route-workspace' : ''}`} hidden={mode === 'calendar' || mode === 'heritage'} aria-label={t.appTitle} ref={workspaceRef}>
           <div className="exploration-sidebar">
           <div hidden={mode !== 'map'}>
           <FilterPanel
@@ -222,14 +288,14 @@ export function App() {
           </div>
           <div className="map-column" id="faith-main-map" role="region" aria-label={mode === 'routes' ? discovery.routeMap : discovery.ordinaryMap} ref={mapPanelRef} tabIndex={-1}>
             {mode === 'routes' && selectedRoute && <p className="discovery-map-note">{discovery.overview}</p>}
-            {mode === 'map' && focusRequest && <div className="discovery-focused-place"><p>{discovery.focused}<strong>{focusRequest.organization.name}</strong></p><button className="text-button" onClick={() => setFocusRequest(undefined)}>{discovery.clearFocus}</button></div>}
+            {mode === 'map' && focusRequest && <div className="discovery-focused-place"><p>{focusRequest.temporary ? discovery.currentLocations : discovery.focused}<strong>{focusRequest.temporary ? ` · ${focusRequest.organization.name}` : focusRequest.organization.name}</strong></p>{!focusRequest.temporary && <button className="text-button" onClick={() => setFocusRequest(undefined)}>{discovery.clearFocus}</button>}</div>}
             <h2 className="visually-hidden">{mode === 'routes' ? discovery.routeMap : discovery.ordinaryMap}</h2>
             <ReligiousOrganizationMap
               items={filteredOrganizations}
               language={language}
               userLocation={userLocation}
               onExplore={openFaithSpace}
-              visible={mode !== 'calendar'}
+              visible={mode !== 'calendar' && mode !== 'heritage'}
               routeStops={mode === 'routes' ? selectedRoute?.organizations : undefined}
               selectedRouteStopId={selectedRouteStopId}
               onRouteStopSelect={setSelectedRouteStopId}
@@ -268,7 +334,7 @@ export function App() {
       <Footer language={language} />
     </div>
     {selectedOrganization && <FaithSpaceBoundary language={language} onClose={closeFaithSpace}><Suspense fallback={<FaithSpaceStatus language={language} onClose={closeFaithSpace} />}>
-      <FaithSpaceModal organization={selectedOrganization} language={language} onLanguageChange={handleLanguageChange} onClose={closeFaithSpace} />
+      <FaithSpaceModal organization={selectedOrganization} language={language} onLanguageChange={handleLanguageChange} onClose={closeFaithSpace} initialPanel={faithSpacePanel} />
     </Suspense></FaithSpaceBoundary>}
     </>
   );

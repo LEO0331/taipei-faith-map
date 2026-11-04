@@ -15,6 +15,7 @@ type Props = {
   language: Language;
   onLanguageChange: (language: Language) => void;
   onClose: () => void;
+  initialPanel?: 'scene' | 'place';
 };
 
 const labels = {
@@ -38,11 +39,11 @@ const labels = {
   },
 };
 
-export default function FaithSpaceModal({ organization, language, onLanguageChange, onClose }: Props) {
+export default function FaithSpaceModal({ organization, language, onLanguageChange, onClose, initialPanel = 'scene' }: Props) {
   const config = getFaithSpaceConfig(organization.religion);
   const [selectedId, setSelectedId] = useState(config.hotspots[0].id);
   const [expanded, setExpanded] = useState(true);
-  const [panel, setPanel] = useState<'scene' | 'place'>('scene');
+  const [panel, setPanel] = useState<'scene' | 'place'>(initialPanel);
   const [guided, setGuided] = useState(false);
   const [completed, setCompleted] = useState(false);
   const dialog = useRef<HTMLDivElement>(null);
