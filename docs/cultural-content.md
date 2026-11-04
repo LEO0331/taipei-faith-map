@@ -48,7 +48,7 @@ The source records within the data module remain the evidence associated with ea
 
 This small collection does not imply that unprofiled places are less important. The examined Catholic records describe orders or offices and could not safely be treated as church-building records, so no Catholic church profile was inferred. The Zhongshan sources disagree on the month of building completion; the profile uses the agreed year, 1937. Schedules and access arrangements can change and should be checked directly before a visit.
 
-V1.2 should prioritize documented external cultural review, more safely matched profiles, renewed source checks and evaluation with real devices and screen readers. Ambient sound remains optional and deferred until suitable original or licensed environmental audio is verified. Do not add religious activity tracking or persist tour/reflection history.
+Ongoing editorial work should prioritize documented external cultural review, more safely matched profiles, renewed source checks and evaluation with real devices and screen readers. Ambient sound remains optional and deferred until suitable original or licensed environmental audio is verified. Do not add religious activity tracking or persist tour/reflection history.
 
 ## 繁體中文
 
@@ -81,4 +81,73 @@ V1.2 should prioritize documented external cultural review, more safely matched 
 
 沒有場所介紹不代表文化重要性較低。已檢視的天主教紀錄屬於修會或辦公處，不能安全當成聖堂建築紀錄，因此未推定聖堂介紹。中山教會的來源對建築完工月份記載不同，介紹僅使用一致的 1937 年。參訪時段及開放規則會變動，出發前請向場所確認。
 
-V1.2 宜優先安排有紀錄的外部文化審閱、更多安全匹配的場所、重新核對來源，以及實機與螢幕閱讀器評估。環境音仍為選配，待原創或授權素材確認後再考慮加入。不要新增宗教活動追蹤，也不要儲存導覽或靜心活動紀錄。
+後續編輯工作宜優先安排有紀錄的外部文化審閱、更多安全匹配的場所、重新核對來源，以及實機與螢幕閱讀器評估。環境音仍為選配，待原創或授權素材確認後再考慮加入。不要新增宗教活動追蹤，也不要儲存導覽或靜心活動紀錄。
+
+## V1.2 Calendar and Route Contributions
+
+### English: festival references and dated occurrences
+
+`src/features/religious-calendar/festivalReferences.ts` derives references from each record's original `festivalDates`. These strings remain government-data references, with their original text and an unparsed interpretation status. A lunar/Gregorian/unknown label only identifies the wording; it does not verify a current occurrence. Do not convert a lunar anniversary to a Gregorian date, infer a recurrence year, or treat an annual tradition as this year's confirmed event.
+
+To add a dated occurrence in `culturalEvents.ts`:
+
+1. Find a dated, event-specific organizer announcement or trustworthy public notice. Read the actual page and establish the occurrence's Gregorian year, dates, location and attendance conditions. General histories and recurring festival references cannot supply these details.
+2. Copy the exact dataset identity: `organizationId`, `organizationName`, `district` and `address`. Keep the registered address distinct from `location`, which can describe the announced event area. Give the occurrence a unique `id`, bilingual `title`, `description` and `location`, and direct evidence in `sources`.
+3. Set `startDate` and `endDate` as inclusive `YYYY-MM-DD` Gregorian dates, including the complete years for cross-year events. Use `timeZone: 'Asia/Taipei'`. Add optional `startTime` and `endTime` only when verified, in 24-hour `HH:mm` format; leave unknown times absent rather than using midnight as a placeholder.
+4. Record `attendance` as `public`, `registration-required`, `restricted` or `unknown`. Free participation supported by a notice does not promise unrestricted access to every related activity or interior. Add a safe `registrationUrl` only when applicable and published. Do not infer attendance rules from an organization's religion.
+5. Record `status` as `confirmed`, `cancelled` or `postponed`, plus the actual `verifiedAt`, source dates and editorial status. Preserve a cancellation or postponement visibly rather than silently changing its old dates to a guess. Pending or invalid entries are withheld; cancelled and postponed entries do not appear as upcoming confirmed events.
+
+Calendar helpers use Taipei's current date and compare date ranges, so multi-day and cross-year occurrences can appear in each overlapping month. The UI's source-check date and freshness reminder are editorial context, not a live confirmation of the announcement. Recheck the organizer before a visit or when updating the entry. There is no event scraping or automatic feed, and regular tests do not contact source sites.
+
+The initial **28–30 November 2026 Qingshan Temple night patrol and procession** was internally checked on **2026-11-04** against the [organizer's dated event page](https://www.religiouscarnival.com/edcontent.php?id=1155&lang=tw&tb=8) and a [government cultural notice](https://www.ilccb.gov.tw/News_Content.aspx?n=10203&s=410445&sms=12921). Daily times were left unspecified. The government notice supports free public participation; visitors must still confirm current daily arrangements.
+
+### English: adding a cultural route
+
+`src/features/cultural-routes/culturalRoutes.ts` contains editorial sequences of two to five distinct registered organizations. Add a unique route `id`, bilingual title and description, district labels, a supported theme, review date and honest editorial status. Each stop needs the full exact organization identity, its own bilingual title and description, and `sourceReferences` supporting its location-specific claims. A route narrative must follow the evidence at its stops and must not imply institutional endorsement or guarantee that the sites are open to visitors.
+
+The route resolver validates identities against the current dataset, required bilingual content, source metadata and safe URLs, review dates, themes, district labels and unique stops. It rejects missing or ambiguous records, invalid/outlier Taipei coordinates, and registrations whose names explicitly indicate revocation, dissolution or transfer. Pending routes are withheld. The shared helpers in `src/utils/curatedContent.ts` also serve V1.1 profiles and calendar entries; do not create looser matching rules for a route.
+
+Map markers number the stops and highlight the selected place. They do not establish a surveyed path between coordinates. `walkingDirections.ts` builds an external Google Maps URL with walking mode and ordered waypoints, falling back to per-leg links when a whole-route URL exceeds supported waypoint or length limits. Do not draw a straight line and call it a walkable route, and do not add estimated time or distance without evidence. No walking-safety, step-free-access or continuous-sidewalk survey is implied.
+
+The **Map / Calendar / Walking Routes** navigation keeps the original map mounted and preserves its filters, geolocation and nearby-search state. Calendar state and route selection are ephemeral. Opening a Faith Space from an event or stop uses the existing modal and return-focus behavior. Keep new cultural content behind the feature's lazy-loading boundary and maintain a usable return-to-map path.
+
+### V1.2 route source index / 路線來源索引
+
+The following sources were internally checked on **2026-11-04**. Each stop's source records remain attached to its claims; this index does not replace those citations.
+
+| Route / 路線 | Stops and evidence / 站點與證據 |
+| --- | --- |
+| Three temple stories in Bangka / 艋舺三處廟宇文化 | [Lungshan Temple heritage](https://taiwangods.moi.gov.tw/html/Cultural/3_0011.aspx?i=13) → [Qingshan Temple heritage](https://taiwangods.moi.gov.tw/Religious_Culture/html/Cultural/3_0011.aspx?i=211) → [Qingshui Temple heritage](https://taiwangods.moi.gov.tw/html/Cultural/3_0011.aspx?i=12) |
+| A church and a City God temple in Dadaocheng / 大稻埕的教會與城隍廟 | [Lee Chun-sheng Memorial Church identity](https://www.pct.org.tw/churchdata.aspx?strOrgNo=C03001) and [government heritage history](https://taiwangods.moi.gov.tw/Religious_Culture/html/Cultural/3_0011.aspx?i=356) → [Xia-Hai City God Temple heritage](https://taiwangods.moi.gov.tw/Religious_Culture/html/Cultural/3_0011.aspx?i=58) |
+
+### 繁體中文：祭典參考與具體活動
+
+`src/features/religious-calendar/festivalReferences.ts` 從各筆登記資料的 `festivalDates` 產生參考項目。原文仍是政府資料的祭典參考，保留未解析狀態；農曆／國曆／未確認曆法標籤只判斷文字，不等於今年有活動。不要自行將農曆紀念日換算成國曆、推定重複年份，或將傳統祭典視為今年已確認的活動。
+
+在 `culturalEvents.ts` 新增具體活動時：
+
+1. 找到具日期、針對該次活動的主辦公告或可信公開通知，實際閱讀並確認國曆年份、日期、地點與參與條件。一般歷史沿革與每年祭典文字不能代替這些證據。
+2. 複製資料集的完整身分：`organizationId`、`organizationName`、`district`、`address`。登記地址與活動 `location` 分開記錄，後者可描述公告的活動範圍。另填唯一 `id`、雙語 `title`、`description`、`location` 及直接證據 `sources`。
+3. `startDate`、`endDate` 使用包含起訖日在內的國曆 `YYYY-MM-DD`，跨年活動需填完整年份；`timeZone` 固定為 `Asia/Taipei`。只有查證時刻後才填選用的 `startTime`、`endTime`（24小時制 `HH:mm`），未知時刻留空，不用午夜作占位值。
+4. `attendance` 明確填 `public`、`registration-required`、`restricted` 或 `unknown`。公告免費參與不代表所有相關活動或室內均可自由進入。適用且有公告時才填安全的 `registrationUrl`；不得從宗教別推定參與規則。
+5. 誠實記錄 `confirmed`、`cancelled` 或 `postponed` 的活動狀態、實際 `verifiedAt`、來源日期與編輯狀態。取消或延期應保留明確標示，不將舊日期靜默改成猜測值。待核對或無效項目不顯示；取消及延期項目不列入即將舉行的已確認活動。
+
+日期工具以臺北當日日期與區間判斷跨日、跨月及跨年活動。來源核對日期與時效提醒是編輯資訊，不代表系統正即時確認公告。參訪或更新內容前應再次向主辦單位核實。系統不爬取活動、不接自動資料流，例行測試也不連線檢查來源。
+
+首筆 **2026年11月28日至30日艋舺青山宮暗訪暨遶境** 於 **2026-11-04** 核對上方主辦活動頁與政府藝文公告；每日時刻留空。政府通知支持免費公開參與，但當日安排仍應向主辦單位確認。
+
+### 繁體中文：新增文化路線
+
+`src/features/cultural-routes/culturalRoutes.ts` 存放由二至五個不同登記團體組成的文化停靠順序。新增唯一 `id`、雙語標題與介紹、行政區標籤、支援的主題、核對日期及誠實的編輯狀態。每站都要有完整登記身分、雙語標題與說明，以及支持場所特定敘述的 `sourceReferences`。整條路線的敘述應由各站證據支持，不暗示機構背書或保證開放參訪。
+
+路線查找依目前資料集驗證身分、雙語必填欄位、來源資料與安全網址、核對日期、主題、行政區標籤及站點唯一性。找不到或有歧義的紀錄、臺北座標異常，以及名稱明示廢止、解散或改隸的登記均會被拒絕；待核對路線不顯示。`src/utils/curatedContent.ts` 與 V1.1 場所介紹、行事曆共用，勿另造較寬鬆的路線身分比對規則。
+
+地圖編號僅表示順序並標示目前場所，不代表兩點之間有經實測路徑。`walkingDirections.ts` 以步行模式及依序途經點產生外部 Google 地圖連結，整條網址超過支援點數或長度時，改為逐段連結。不要把直線稱為可步行路徑，也不要加入無證據的時間、距離推估。本導覽未暗示已調查步行安全、全程無階梯或連續人行道。
+
+「地圖／行事曆／散步路線」保留原地圖掛載與篩選、定位及附近搜尋狀態；日曆與路線選擇僅存在記憶體。活動或站點開啟信仰空間時沿用現有對話框及焦點還原。新內容應維持按需載入，並提供可用的返回地圖入口。
+
+### V1.3 editorial priorities / 後續編輯工作
+
+The calendar and routes are a manually curated sample, not an exhaustive directory or live availability service. Reverify dates and attendance before refreshing events, and recheck identities after regenerating government data. V1.3 priorities are source renewal, documented external cultural review, more safely matched content and evaluation with real devices and screen readers. Audio remains deferred until appropriate original or licensed assets are verified; no tracking should be added.
+
+行事曆與路線為人工精選樣本，不是完整活動目錄或即時開放服務。更新活動時重新核對日期與參與條件，重產政府資料後也要再比對場所身分。V1.3 宜優先更新來源、安排有紀錄的外部文化審閱、補充安全匹配內容，以及實機與螢幕閱讀器評估。環境音待原創或授權素材確認後再考慮，不新增追蹤。

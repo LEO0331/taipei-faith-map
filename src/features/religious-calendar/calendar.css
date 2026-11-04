@@ -1,0 +1,59 @@
+.religious-calendar { background: #fbf8f1; border: 1px solid #dcd4c7; border-radius: 12px; padding: clamp(16px, 3vw, 32px); min-width: 0; color: #322b25; }
+.religious-calendar [hidden] { display: none !important; }
+.religious-calendar button, .religious-calendar select, .religious-calendar input { min-height: 44px; }
+.religious-calendar a { min-height: 44px; }
+.religious-calendar :focus-visible { outline: 3px solid #0f766e; outline-offset: 3px; }
+.religious-calendar .discovery-heading h2 { font-family: Georgia, 'Noto Serif TC', serif; font-weight: 500; font-size: clamp(25px, 4vw, 38px); margin: 8px 0 12px; }
+.religious-calendar .discovery-heading > p:not(.eyebrow) { color: #706358; line-height: 1.8; max-width: 48rem; }
+.calendar-filters { display: grid; grid-template-columns: 1fr 1fr 2fr; gap: 16px; margin: 24px 0; }
+.calendar-filters label { color: #4a4037; font-size: 12px; min-width: 0; }
+.calendar-evidence-note { border-left: 3px solid #9c7245; background: #eee8dd; padding: 12px 16px; line-height: 1.8; font-size: 13px; }
+.calendar-content { display: grid; grid-template-columns: minmax(0, 1.5fr) minmax(260px, 1fr); gap: 24px; margin: 24px 0; }
+.calendar-month-panel, .calendar-details { min-width: 0; }
+.calendar-month-navigation { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.calendar-month-navigation h3 { flex: 1; text-align: center; font-size: 21px; font-family: Georgia, serif; font-weight: 500; margin: 0; }
+.calendar-current-month { margin-left: auto; }
+.calendar-view-switch { display: flex; gap: 8px; margin: 16px 0; }
+.religious-calendar [aria-pressed="true"] { border-color: #0f766e; box-shadow: inset 0 0 0 1px #0f766e; }
+.calendar-view-switch [aria-pressed="true"] { background: #0f766e; color: #fff; }
+.calendar-month { border-collapse: collapse; table-layout: fixed; width: 100%; }
+.calendar-month th { font-size: 12px; font-weight: 500; color: #706358; padding-block: 8px; }
+.calendar-month td { padding: 3px; vertical-align: top; }
+.calendar-day { position: relative; border: 1px solid #ded6c9; border-radius: 6px; background: #fffdf9; color: #322b25; display: flex; align-items: start; justify-content: space-between; width: 100%; min-width: 0; height: 60px; padding: 8px; cursor: pointer; font-variant-numeric: tabular-nums; }
+.calendar-day[aria-current="date"] > span { text-decoration: underline; text-underline-offset: 5px; font-weight: 800; }
+.calendar-day[aria-pressed="true"] { background: #dfebe4; }
+.calendar-day small { background: #0f766e; color: #fff; min-width: 18px; min-height: 18px; display: grid; place-items: center; border-radius: 50%; font-size: 10px; }
+.calendar-day-agenda { margin: 20px 0; border-top: 1px solid #dcd4c7; padding-top: 8px; }
+.calendar-day-agenda h4 { font-size: 15px; font-weight: 600; }
+.calendar-event-entry { display: grid; width: 100%; text-align: left; gap: 8px; padding: 16px; margin-block: 10px; border: 1px solid #dcd4c7; background: #fffdf9; color: #322b25; border-radius: 8px; cursor: pointer; }
+.calendar-event-entry strong { font-size: 16px; line-height: 1.6; }
+.calendar-event-entry > span:not(.calendar-status) { font-size: 12px; line-height: 1.7; }
+.calendar-status { display: inline-block; width: fit-content; border: 1px solid #bcb099; padding: 4px 8px; border-radius: 3px; color: #574735; font-size: 11px; line-height: 1.5; }
+.calendar-status-cancelled, .calendar-status-postponed { border-style: dashed; font-weight: 700; }
+.calendar-upcoming { margin-top: 24px; padding-top: 16px; border-top: 1px solid #dcd4c7; }
+.calendar-upcoming h3 { font-size: 17px; }
+.calendar-details { border: 1px solid #dcd4c7; border-radius: 10px; padding: 20px; background: #f2ecdf; align-self: start; }
+.calendar-details h3 { font-family: Georgia, 'Noto Serif TC', serif; font-size: 24px; font-weight: 500; overflow-wrap: anywhere; line-height: 1.5; }
+.calendar-details p, .calendar-details blockquote, .calendar-event-facts { font-size: 14px; line-height: 1.85; }
+.calendar-details blockquote { margin: 12px 0; padding-left: 12px; border-left: 2px solid #9c7245; }
+.calendar-event-facts > div { margin-block: 14px; }
+.calendar-event-facts dt { color: #706358; font-size: 11px; }
+.calendar-event-facts dd { margin: 4px 0; overflow-wrap: anywhere; }
+.calendar-place-actions, .calendar-external-actions { display: flex; flex-wrap: wrap; gap: 12px; margin-block: 18px; }
+.calendar-external-actions a { color: #0f766e; font-size: 13px; text-decoration: underline; text-underline-offset: 3px; padding-block: 8px; }
+.calendar-source, .calendar-reference-note { color: #706358; font-size: 12px !important; line-height: 1.8; }
+.calendar-empty { font-size: 13px; color: #706358; }
+.festival-references { margin-top: 32px; border-top: 1px solid #dcd4c7; padding-top: 24px; }
+.festival-references h3 { margin: 0; font-family: Georgia, 'Noto Serif TC', serif; font-size: 24px; font-weight: 500; }
+.festival-reference-list { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; margin-block: 20px; }
+.festival-reference { display: flex; flex-direction: column; gap: 8px; text-align: left; padding: 16px; border: 1px solid #dcd4c7; border-radius: 8px; background: #fffdf9; color: #322b25; cursor: pointer; overflow-wrap: anywhere; min-width: 0; }
+.festival-reference > span:not(.calendar-status) { font-size: 13px; line-height: 1.8; }
+.festival-reference small { color: #706358; line-height: 1.7; }
+.religious-calendar .cultural-sources { border-left: 2px solid #9c7245; padding-left: 12px; margin-top: 20px; }
+.religious-calendar .cultural-sources h4 { font-size: 12px; margin-bottom: 8px; }
+.religious-calendar .cultural-sources ul { list-style: none; padding-left: 0; }
+.religious-calendar .cultural-sources a { font-size: 12px; overflow-wrap: anywhere; text-decoration: underline; color: #0f766e; display: inline-block; padding-block: 8px; }
+.religious-calendar .cultural-source-meta { font-size: 11px; color: #706358; margin: 2px 0; }
+@media (max-width: 850px) { .calendar-content { grid-template-columns: 1fr; } .festival-reference-list { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 600px) { .calendar-filters { grid-template-columns: 1fr; gap: 12px; } .festival-reference-list { grid-template-columns: 1fr; } .calendar-current-month { flex-basis: 100%; } .calendar-month-navigation h3 { font-size: 18px; } .calendar-month td { padding: 1px; } .calendar-day { padding: 5px 3px; height: 48px; font-size: 12px; } .calendar-day small { position: absolute; bottom: 3px; right: 3px; font-size: 9px; min-width: 14px; min-height: 14px; } .calendar-details { padding: 16px; } }
+@media (prefers-reduced-motion: reduce) { .religious-calendar *, .religious-calendar *::before, .religious-calendar *::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; } }

@@ -11,6 +11,32 @@
   box-sizing: border-box;
 }
 
+.app [hidden] { display: none !important; }
+.visually-hidden { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; border: 0; }
+.discovery-navigation { display: flex; flex-wrap: wrap; gap: 6px; padding: 12px 1rem; border-bottom: 1px solid #d9e2ec; background: #fff; }
+.discovery-navigation button { min-height: 44px; padding: 8px 18px; border: 1px solid transparent; border-radius: 6px; background: transparent; color: #475569; cursor: pointer; }
+.discovery-navigation button[aria-current="page"] { background: #173c3b; color: white; }
+.discovery-navigation :focus-visible, .exploration-sidebar :focus-visible, .calendar-workspace :focus-visible { outline: 3px solid #0f766e; outline-offset: 3px; }
+.exploration-sidebar, .calendar-workspace { min-width: 0; }
+.map-records { display: grid; gap: 1rem; }
+.discovery-map-note { margin: 0; padding: 12px 16px; border-left: 3px solid #0f766e; background: #edf3ee; color: #334155; font-size: 13px; line-height: 1.7; }
+.discovery-focused-place { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; padding: 12px; background: #ecfdf5; border-radius: 6px; }
+.discovery-focused-place p { margin: 0; font-size: 14px; overflow-wrap: anywhere; }
+.discovery-error { padding: 24px; background: #fff; border: 1px solid #d9e2ec; border-radius: 8px; }
+.cultural-route-marker:focus-visible { outline: 3px solid #17202a; outline-offset: 5px; border-radius: 50%; }
+.route-marker-legend { margin: 0; padding: 12px; font-size: 12px; color: #475569; line-height: 1.7; }
+.map-column:focus-visible, .route-map-selection :focus-visible { outline: 3px solid #0f766e; outline-offset: 4px; }
+.route-map-shortcut { display: none; }
+.route-map-selection { background: #fbf8f1; border: 1px solid #dcd4c7; border-radius: 8px; padding: 16px; }
+.route-map-selection h3 { margin-block: 6px; font-size: 18px; overflow-wrap: anywhere; }
+.route-map-selection p:not(.eyebrow) { color: #706358; font-size: 13px; line-height: 1.7; }
+@media (min-width: 860px) { .route-workspace .map-column { position: sticky; top: 16px; } }
+@media (max-width: 859px) {
+  .route-map-shortcut { display: block; margin-bottom: 12px; }
+  .route-workspace .exploration-sidebar { max-block-size: 55vh; overflow: auto; overscroll-behavior: contain; padding: 4px; }
+}
+@media (max-width: 480px) { .discovery-navigation { padding-inline: 12px; } .discovery-navigation button { flex: 1 1 auto; padding-inline: 10px; font-size: 14px; } }
+
 body {
   margin: 0;
   min-width: 320px;

@@ -1,4 +1,4 @@
-const CACHE_NAME = 'taipei-faith-map-v1.1';
+const CACHE_NAME = 'taipei-faith-map-v1.2';
 const SCOPE_URL = new URL(self.registration.scope);
 const APP_SHELL = [
   './',
