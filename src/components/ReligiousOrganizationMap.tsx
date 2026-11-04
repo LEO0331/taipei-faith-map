@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useLayoutEffect, useMemo, useRef } from 'react';
 import L from 'leaflet';
 import 'leaflet.markercluster';
 import { MapContainer, TileLayer, useMap } from 'react-leaflet';
@@ -6,6 +6,13 @@ import type { Language, ReligiousOrganization } from '../types';
 import { getGoogleMapsUrl } from '../utils/geo';
 import { religionLabels, translations } from '../utils/i18n';
 import { CulturalRouteMapLayer, hasUsableMapCoordinates } from '../features/cultural-routes/CulturalRouteMapLayer';
+
+export type MapFocusRequest = {
+  organization: ReligiousOrganization;
+  token: number;
+  relatedOrganizations?: ReligiousOrganization[];
+  temporary?: boolean;
+};
 
 type Props = {
   items: ReligiousOrganization[];
@@ -15,7 +22,7 @@ type Props = {
   routeStops?: ReligiousOrganization[];
   selectedRouteStopId?: string;
   onRouteStopSelect?: (organizationId: string) => void;
-  focusRequest?: { organization: ReligiousOrganization; token: number };
+  focusRequest?: MapFocusRequest;
   visible?: boolean;
 };
 
@@ -40,6 +47,13 @@ const religionColors: Record<string, string> = {
 export function ReligiousOrganizationMap({ items, language, userLocation, onExplore, routeStops, selectedRouteStopId, onRouteStopSelect, focusRequest, visible = true }: Props) {
   const routeActive = !!routeStops && routeStops.length >= 2 && routeStops.every(hasUsableMapCoordinates)
     && new Set(routeStops.map(stop => stop.id)).size === routeStops.length;
+  const focusedOrganizations = getFocusedOrganizations(focusRequest, routeActive);
+  const focusKey = JSON.stringify(focusedOrganizations.map(organization => organization.id));
+  const clusteredItems = useMemo(() => {
+    if (!focusedOrganizations.length) return items;
+    const focusedIds = new Set(focusedOrganizations.map(organization => organization.id));
+    return items.filter(organization => !focusedIds.has(organization.id));
+  }, [items, focusKey]);
   return (
     <div className="map-shell">
       <MapContainer center={TAIPEI_CENTER} zoom={12} scrollWheelZoom className="map">
@@ -47,14 +61,16 @@ export function ReligiousOrganizationMap({ items, language, userLocation, onExpl
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
         />
-        <ClusteredMarkers items={items} language={language} onExplore={onExplore} hidden={routeActive} />
+        <ClusteredMarkers items={clusteredItems} language={language} onExplore={onExplore} hidden={routeActive} />
         <UserLocationMarker location={userLocation} language={language} />
         <CulturalRouteMapLayer stops={routeActive ? routeStops : undefined} selectedStopId={selectedRouteStopId} language={language} onSelectStop={onRouteStopSelect} />
-        <FocusedOrganizationMarker request={routeActive ? undefined : focusRequest} language={language} onExplore={onExplore} />
+        <FocusedOrganizationMarker request={focusRequest} suspended={routeActive} language={language} onExplore={onExplore} />
         <MapVisibility visible={visible} />
       </MapContainer>
       {routeActive
         ? <p className="route-marker-legend">{language === 'zh' ? '編號表示停靠順序，並非實際步行路徑。' : 'Numbers show stop order, not an actual walking path.'}</p>
+        : focusRequest?.temporary
+          ? <p className="route-marker-legend">{currentLocationNotice(language)}</p>
         : <MapLegend language={language} />}
     </div>
   );
@@ -131,55 +147,106 @@ function MapVisibility({ visible }: { visible: boolean }) {
   return null;
 }
 
-function FocusedOrganizationMarker({ request, language, onExplore }: { request?: Props['focusRequest']; language: Language; onExplore: Props['onExplore'] }) {
+function getFocusedOrganizations(request: MapFocusRequest | undefined, suspended: boolean) {
+  return !suspended && request && hasUsableMapCoordinates(request.organization)
+    ? [request.organization, ...(request.relatedOrganizations ?? [])]
+      .filter((organization, index, group) => hasUsableMapCoordinates(organization) && group.findIndex(item => item.id === organization.id) === index)
+    : [];
+}
+
+function FocusedOrganizationMarker({ request, suspended, language, onExplore }: { request?: MapFocusRequest; suspended: boolean; language: Language; onExplore: Props['onExplore'] }) {
   const map = useMap();
-  const markerRef = useRef<L.Marker | undefined>(undefined);
+  const markers = useRef(new Map<string, L.Marker>());
+  const previousView = useRef<{ center: L.LatLng; zoom: number } | undefined>(undefined);
   const lastViewRequest = useRef<number | undefined>(undefined);
   const lastFocusRequest = useRef<number | undefined>(undefined);
-  const organization = request?.organization;
   const token = request?.token;
+  const temporary = !!request?.temporary;
+  const organizations = getFocusedOrganizations(request, suspended);
+  const groupKey = JSON.stringify(organizations.map(organization => [organization.id, organization.latitude, organization.longitude]));
+  const contentKey = JSON.stringify(organizations.map(organization => [organization.name, organization.address, organization.district, organization.village, organization.phone, organization.religion, organization.festivalDates]));
+
+  // Restore before the route layer's passive effects capture and fit their view.
+  useLayoutEffect(() => {
+    const activeTemporaryRequest = organizations.length > 0 && temporary;
+    if (previousView.current && !activeTemporaryRequest) {
+      const previous = previousView.current;
+      previousView.current = undefined;
+      map.setView(previous.center, previous.zoom, { animate: false });
+    }
+  }, [map, groupKey, temporary]);
+
+  // Apply after route exit restores its view. Only an explicit new request may fit.
+  useEffect(() => {
+    if (!organizations.length || token === lastViewRequest.current) return;
+    if (temporary && !previousView.current) previousView.current = { center: map.getCenter(), zoom: map.getZoom() };
+    map.invalidateSize({ pan: false });
+    if (organizations.length > 1) map.fitBounds(organizations.map(organization => [organization.latitude, organization.longitude] as [number, number]), { padding: [32, 32], maxZoom: 16, animate: false });
+    else map.setView([organizations[0].latitude, organizations[0].longitude], Math.max(map.getZoom(), 15), { animate: false });
+    lastViewRequest.current = token;
+  }, [map, groupKey, token, temporary]);
 
   useEffect(() => {
-    if (!organization || !hasUsableMapCoordinates(organization)) return;
-    const marker = L.marker([organization.latitude, organization.longitude], { icon: createMarkerIcon(organization.religion), title: organization.name, keyboard: true });
-    markerRef.current = marker;
-    marker.addTo(map);
-    if (token !== lastViewRequest.current) {
-      map.invalidateSize({ pan: false });
-      map.setView([organization.latitude, organization.longitude], Math.max(map.getZoom(), 15), { animate: false });
-      lastViewRequest.current = token;
+    const entries = new Map<string, L.Marker>();
+    for (const organization of organizations) {
+      const marker = L.marker([organization.latitude, organization.longitude], { icon: createMarkerIcon(organization.religion), title: organization.name, keyboard: true });
+      marker.addTo(map);
+      entries.set(organization.id, marker);
     }
+    markers.current = entries;
     return () => {
-      marker.removeFrom(map);
-      if (markerRef.current === marker) markerRef.current = undefined;
+      for (const marker of entries.values()) marker.removeFrom(map);
+      if (markers.current === entries) markers.current = new Map();
     };
-  }, [map, organization, token]);
+  }, [map, groupKey]);
 
   useEffect(() => {
-    const marker = markerRef.current;
-    if (!organization || !marker) return;
-    const content = document.createElement('div');
-    content.innerHTML = renderPopup(organization, language);
-    const button = content.querySelector<HTMLButtonElement>('button[data-faith-organization]');
-    const openSpace = (event: MouseEvent) => {
-      // The ordinary clustered-popup bridge is not involved in this dedicated marker.
-      event.stopPropagation();
-      button?.focus();
-      onExplore(organization, () => {
-        const currentMarker = markerRef.current;
-        currentMarker?.openPopup();
-        currentMarker?.getPopup()?.getElement()?.querySelector<HTMLButtonElement>('button[data-faith-organization]')?.focus({ preventScroll: true });
-      });
+    const cleanup: (() => void)[] = [];
+    organizations.forEach((organization, index) => {
+      const marker = markers.current.get(organization.id);
+      if (!marker) return;
+      const label = temporary ? `${currentLocationLabel(language)}: ${organization.name}` : organization.name;
+      marker.getElement()?.setAttribute('aria-label', label);
+      marker.getElement()?.setAttribute('title', label);
+      const content = document.createElement('div');
+      content.innerHTML = renderPopup(organization, language, temporary);
+      const button = content.querySelector<HTMLButtonElement>('button[data-faith-organization]');
+      const openSpace = (event: MouseEvent) => {
+        // Do not also invoke the ordinary clustered-popup delegation bridge.
+        event.stopPropagation();
+        button?.focus();
+        onExplore(organization, () => {
+          const currentMarker = markers.current.get(organization.id);
+          currentMarker?.openPopup();
+          currentMarker?.getPopup()?.getElement()?.querySelector<HTMLButtonElement>('button[data-faith-organization]')?.focus({ preventScroll: true });
+        });
+      };
+      button?.addEventListener('click', openSpace);
+      cleanup.push(() => button?.removeEventListener('click', openSpace));
+      marker.bindPopup(content, { maxWidth: 280, autoPan: false });
+      if (index === 0) {
+        marker.openPopup();
+        if (token !== lastFocusRequest.current) {
+          button?.focus({ preventScroll: true });
+          lastFocusRequest.current = token;
+        }
+      }
+    });
+    return () => {
+      for (const removeListener of cleanup) removeListener();
     };
-    button?.addEventListener('click', openSpace);
-    marker.bindPopup(content, { maxWidth: 280, autoPan: false }).openPopup();
-    if (token !== lastFocusRequest.current) {
-      button?.focus({ preventScroll: true });
-      lastFocusRequest.current = token;
-    }
-    return () => { button?.removeEventListener('click', openSpace); };
-  }, [organization, language, onExplore, token]);
+  }, [map, groupKey, contentKey, language, temporary, onExplore, token]);
   return null;
+}
+
+function currentLocationLabel(language: Language) {
+  return language === 'zh' ? '目前登記位置' : 'Current registered location';
+}
+
+function currentLocationNotice(language: Language) {
+  return language === 'zh'
+    ? '標記為目前登記位置，並非經查證的歷史座標；不代表該團體當時已位於此處。'
+    : 'Markers show current registered locations, not verified historical coordinates. They do not establish that the organization occupied this site at the time.';
 }
 
 function UserLocationMarker({
@@ -231,7 +298,7 @@ function createMarkerIcon(religion: string) {
   });
 }
 
-function renderPopup(item: ReligiousOrganization, language: Language) {
+function renderPopup(item: ReligiousOrganization, language: Language, currentLocation = false) {
   const t = translations[language];
   const rows = [
     [t.religion, religionLabels[language][item.religion]],
@@ -247,6 +314,7 @@ function renderPopup(item: ReligiousOrganization, language: Language) {
   return `
     <article class="map-popup">
       <h3>${escapeHtml(item.name)}</h3>
+      ${currentLocation ? `<p class="popup-location-note">${escapeHtml(currentLocationNotice(language))}</p>` : ''}
       ${rows
         .map(
           ([label, value]) =>

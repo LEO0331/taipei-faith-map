@@ -146,8 +146,14 @@ The following sources were internally checked on **2026-11-04**. Each stop's sou
 
 「地圖／行事曆／散步路線」保留原地圖掛載與篩選、定位及附近搜尋狀態；日曆與路線選擇僅存在記憶體。活動或站點開啟信仰空間時沿用現有對話框及焦點還原。新內容應維持按需載入，並提供可用的返回地圖入口。
 
-### V1.3 editorial priorities / 後續編輯工作
+### Ongoing editorial priorities / 後續編輯工作
 
-The calendar and routes are a manually curated sample, not an exhaustive directory or live availability service. Reverify dates and attendance before refreshing events, and recheck identities after regenerating government data. V1.3 priorities are source renewal, documented external cultural review, more safely matched content and evaluation with real devices and screen readers. Audio remains deferred until appropriate original or licensed assets are verified; no tracking should be added.
+The calendar and routes are a manually curated sample, not an exhaustive directory or live availability service. Reverify dates and attendance before refreshing events, and recheck identities after regenerating government data. Ongoing priorities are source renewal, documented external cultural review, more safely matched content and evaluation with real devices and screen readers. Audio remains deferred until appropriate original or licensed assets are verified; no tracking should be added.
 
-行事曆與路線為人工精選樣本，不是完整活動目錄或即時開放服務。更新活動時重新核對日期與參與條件，重產政府資料後也要再比對場所身分。V1.3 宜優先更新來源、安排有紀錄的外部文化審閱、補充安全匹配內容，以及實機與螢幕閱讀器評估。環境音待原創或授權素材確認後再考慮，不新增追蹤。
+行事曆與路線為人工精選樣本，不是完整活動目錄或即時開放服務。更新活動時重新核對日期與參與條件，重產政府資料後也要再比對場所身分。後續宜優先更新來源、安排有紀錄的外部文化審閱、補充安全匹配內容，以及實機與螢幕閱讀器評估。環境音待原創或授權素材確認後再考慮，不新增追蹤。
+
+## V1.3 Historical Content / 歷史內容
+
+Historical milestones and heritage stories use separate modules under `src/features/heritage`; they are not current Calendar events or amendments to government registration data. The [historical-content contributor guide](historical-content.md) covers evidence precision, deterministic ordering, the strict current-place manifest, chapters without place links, existing-route references and the initial source inventory. Each milestone, story and chapter requires source evidence and honest review metadata. The collection does not imply verified historical coordinates, community endorsement or archival-image reuse rights.
+
+歷史里程碑與文化故事獨立存於 `src/features/heritage`，不是行事曆的當代活動，也不改寫政府登記紀錄。[歷史內容貢獻指南](historical-content.md)說明史料精度、固定排序、嚴格的現址對照、無場所連結章節、既有路線引用及首批來源。史事、故事與章節皆需來源與誠實的核對資訊；內容不暗示歷史座標已驗證、社群背書或歷史影像重用授權。

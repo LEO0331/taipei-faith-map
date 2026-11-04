@@ -23,14 +23,16 @@ type Marker = {
 const state = vi.hoisted(() => ({
   container: undefined as unknown as HTMLElement,
   fits: [] as number[][][], views: [] as number[][], invalidations: 0,
+  operations: [] as string[], centerReads: 0, instances: [] as Marker[],
 }));
 const map = vi.hoisted(() => ({
   getContainer: () => state.container,
-  getCenter: () => ({ lat: 25.05, lng: 121.54 }), getZoom: () => 12,
+  getCenter: () => { state.centerReads++; return { lat: 25.05, lng: 121.54 }; }, getZoom: () => 12,
   invalidateSize: () => { state.invalidations++; },
-  fitBounds: (coordinates: number[][]) => { state.fits.push(coordinates); },
+  fitBounds: (coordinates: number[][]) => { state.fits.push(coordinates); state.operations.push('fit'); },
   setView: (coordinates: number[] | { lat: number; lng: number }, zoom: number) => {
     state.views.push([...(Array.isArray(coordinates) ? coordinates : [coordinates.lat, coordinates.lng]), zoom]);
+    state.operations.push('view');
   },
   addLayer: (cluster: Cluster) => {
     cluster.element = document.createElement('div');
@@ -79,6 +81,7 @@ vi.mock('leaflet', () => ({ default: {
       on(event, listener) { element.addEventListener(event, listener); return marker; },
     };
     marker.setIcon(options.icon);
+    state.instances.push(marker);
     return marker;
   },
 } }));
@@ -92,6 +95,7 @@ const second = { ...first, id: 'second', name: '第二站', longitude: 121.51 };
 beforeEach(() => {
   state.container = document.createElement('div'); document.body.append(state.container);
   state.fits = []; state.views = []; state.invalidations = 0;
+  state.operations = []; state.centerReads = 0; state.instances = [];
 });
 afterEach(() => { cleanup(); state.container.remove(); });
 
@@ -168,5 +172,77 @@ describe('shared map route and calendar layers', () => {
     rerender(<ReligiousOrganizationMap items={stops} language="en" onExplore={onExplore} focusRequest={request} routeStops={stops} />);
     rerender(<ReligiousOrganizationMap items={stops} language="en" onExplore={onExplore} focusRequest={request} />);
     expect(state.views).toEqual([[25.04, 121.5, 15], [25.05, 121.54, 12]]);
+  });
+
+  it('fits an explicit historical group once and labels its safely escaped present-day locations', () => {
+    const onExplore = vi.fn();
+    const unsafeName = { ...second, name: '<img src=x onerror=alert(1)>' };
+    const request = { organization: first, relatedOrganizations: [unsafeName, first], token: 1, temporary: true };
+    const { rerender } = render(<ReligiousOrganizationMap items={[first, unsafeName]} language="en" onExplore={onExplore} focusRequest={request} />);
+    expect(state.fits).toEqual([[[25.04, 121.5], [25.04, 121.51]]]);
+    expect(state.centerReads).toBe(1);
+    expect(state.instances).toHaveLength(2);
+    expect(state.container.querySelector('.mock-cluster')?.textContent).toBe('');
+    expect(state.instances[1].getElement().getAttribute('aria-label')).toBe(`Current registered location: ${unsafeName.name}`);
+    state.instances[1].openPopup();
+    const relatedPopup = state.instances[1].getPopup().getElement()!;
+    expect(relatedPopup.querySelector('img')).toBeNull();
+    expect(relatedPopup.textContent).toContain('not verified historical coordinates');
+    fireEvent.click(relatedPopup.querySelector('button')!);
+    expect(onExplore).toHaveBeenCalledExactlyOnceWith(unsafeName, expect.any(Function));
+    const restoreFocus = onExplore.mock.calls[0][1] as () => void;
+    const modalControl = document.createElement('button'); document.body.append(modalControl); modalControl.focus();
+    rerender(<ReligiousOrganizationMap items={[first, unsafeName]} language="zh" onExplore={onExplore} focusRequest={request} />);
+    expect(document.activeElement).toBe(modalControl);
+    expect(state.fits).toHaveLength(1);
+    expect(state.centerReads).toBe(1);
+    restoreFocus();
+    expect(document.activeElement?.textContent).toBe('探索信仰空間');
+    expect(state.instances[1].getElement().getAttribute('aria-label')).toContain('目前登記位置');
+    modalControl.remove();
+  });
+
+  it('keeps the original snapshot across historical requests and restores it with full marker/listener cleanup', () => {
+    const onExplore = vi.fn();
+    const { rerender, unmount } = render(<ReligiousOrganizationMap items={[]} language="en" onExplore={onExplore} focusRequest={{ organization: first, relatedOrganizations: [second], token: 1, temporary: true }} />);
+    const oldButton = state.instances[0].getPopup().getElement()!.querySelector('button')!;
+    rerender(<ReligiousOrganizationMap items={[]} language="en" onExplore={onExplore} focusRequest={{ organization: second, token: 2, temporary: true }} />);
+    expect(state.centerReads).toBe(1);
+    expect(state.views).toEqual([[25.04, 121.51, 15]]);
+    rerender(<ReligiousOrganizationMap items={[]} language="en" onExplore={onExplore} />);
+    expect(state.views).toEqual([[25.04, 121.51, 15], [25.05, 121.54, 12]]);
+    expect(state.container.querySelectorAll('.faith-marker, .mock-focused-popup')).toHaveLength(0);
+    fireEvent.click(oldButton);
+    expect(onExplore).not.toHaveBeenCalled();
+    unmount();
+    expect(state.container.querySelectorAll('.faith-marker, .mock-focused-popup')).toHaveLength(0);
+  });
+
+  it('restores temporary exploration before a route takes its snapshot and fits its stops', () => {
+    const onExplore = vi.fn(); const stops = [first, second];
+    const { rerender } = render(<ReligiousOrganizationMap items={[]} language="en" onExplore={onExplore} focusRequest={{ organization: first, relatedOrganizations: [second], token: 1, temporary: true }} />);
+    rerender(<ReligiousOrganizationMap items={[]} language="en" onExplore={onExplore} routeStops={stops} />);
+    expect(state.operations).toEqual(['fit', 'view', 'fit']);
+    expect(state.views).toEqual([[25.05, 121.54, 12]]);
+    rerender(<ReligiousOrganizationMap items={[]} language="en" onExplore={onExplore} />);
+    expect(state.views).toEqual([[25.05, 121.54, 12], [25.05, 121.54, 12]]);
+  });
+
+  it('restores temporary exploration before applying a new ordinary calendar selection', () => {
+    const onExplore = vi.fn();
+    const { rerender } = render(<ReligiousOrganizationMap items={[]} language="en" onExplore={onExplore} focusRequest={{ organization: first, relatedOrganizations: [second], token: 1, temporary: true }} />);
+    rerender(<ReligiousOrganizationMap items={[]} language="en" onExplore={onExplore} focusRequest={{ organization: second, token: 2 }} />);
+    expect(state.operations).toEqual(['fit', 'view', 'view']);
+    expect(state.views).toEqual([[25.05, 121.54, 12], [25.04, 121.51, 15]]);
+    rerender(<ReligiousOrganizationMap items={[]} language="en" onExplore={onExplore} />);
+    expect(state.views).toHaveLength(2);
+  });
+
+  it('applies a new calendar request after a route restores its previous viewport', () => {
+    const onExplore = vi.fn(); const stops = [first, second];
+    const { rerender } = render(<ReligiousOrganizationMap items={[]} language="en" onExplore={onExplore} routeStops={stops} />);
+    rerender(<ReligiousOrganizationMap items={[]} language="en" onExplore={onExplore} focusRequest={{ organization: second, token: 3 }} />);
+    expect(state.operations).toEqual(['fit', 'view', 'view']);
+    expect(state.views).toEqual([[25.05, 121.54, 12], [25.04, 121.51, 15]]);
   });
 });
