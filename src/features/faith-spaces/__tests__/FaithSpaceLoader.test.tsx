@@ -28,3 +28,17 @@ it('keeps a failed scene chunk recoverable without removing the map', () => {
   fireEvent.click(screen.getByRole('button', { name: '返回地圖' }));
   expect(onClose).toHaveBeenCalledOnce();
 });
+
+it('returns programmatic focus to the loading dialog and removes its listener on unmount', () => {
+  const outside = document.createElement('button');
+  document.body.append(outside);
+  const { unmount, rerender } = render(<FaithSpaceStatus language="en" onClose={vi.fn()} />);
+  outside.focus();
+  expect(document.activeElement).toBe(screen.getByRole('button', { name: 'Return to map' }));
+  rerender(<FaithSpaceStatus language="zh" onClose={vi.fn()} />);
+  expect(document.activeElement).toBe(screen.getByRole('button', { name: '返回地圖' }));
+  unmount();
+  outside.focus();
+  expect(document.activeElement).toBe(outside);
+  outside.remove();
+});

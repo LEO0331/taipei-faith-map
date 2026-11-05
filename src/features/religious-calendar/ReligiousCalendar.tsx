@@ -11,6 +11,7 @@ import { resolveCulturalEvents } from './calendarValidation';
 import { buildFestivalReferences, organizationMatchesFilters } from './festivalReferences';
 import { eventOccursOn, eventsInMonth, formatCalendarDate, formatCalendarMonth, getTaipeiToday, isRecentVerification, monthDays, shiftMonth, upcomingEvents } from './calendarUtils';
 import type { CalendarFilters, ResolvedCalendarEvent } from './calendarTypes';
+import type { RelatedSelectionRequest } from '../../components/relatedContentTypes';
 import './calendar.css';
 
 type Props = {
@@ -18,9 +19,10 @@ type Props = {
   language: Language;
   onViewMap: (organization: ReligiousOrganization) => void;
   onExplore: (organization: ReligiousOrganization) => void;
+  relatedSelection?: RelatedSelectionRequest;
 };
 
-export default function ReligiousCalendar({ organizations, language, onViewMap, onExplore }: Props) {
+export default function ReligiousCalendar({ organizations, language, onViewMap, onExplore, relatedSelection }: Props) {
   const [today, setToday] = useState(() => getTaipeiToday());
   const [month, setMonth] = useState(() => getTaipeiToday().slice(0, 7));
   const [selectedDate, setSelectedDate] = useState(() => getTaipeiToday());
@@ -34,6 +36,7 @@ export default function ReligiousCalendar({ organizations, language, onViewMap, 
   const headingId = useId();
   const monthHeadingId = useId();
   const detailPanel = useRef<HTMLElement>(null);
+  const relatedSnapshot = useRef<{ month: string; selectedDate: string; view: 'month' | 'agenda'; filters: CalendarFilters; selectedEventId?: string; selectedReferenceId?: string; referenceLimit: number } | undefined>(undefined);
   const t = calendarLabels[language];
   const byId = useMemo(() => new Map(organizations.map(organization => [organization.id, organization])), [organizations]);
   const references = useMemo(() => buildFestivalReferences(organizations), [organizations]);
@@ -49,6 +52,28 @@ export default function ReligiousCalendar({ organizations, language, onViewMap, 
   const eventSelection = filteredEvents.find(item => item.event.id === selectedEventId);
   const referenceSelection = filteredReferences.find(item => item.id === selectedReferenceId);
   const referenceOrganization = referenceSelection && byId.get(referenceSelection.organizationId);
+
+  useEffect(() => {
+    if (relatedSelection?.target.kind === 'event') {
+      const match = resolved.find(item => item.event.id === relatedSelection.target.id && item.organization.id === relatedSelection.target.organizationId);
+      if (!match) return;
+      relatedSnapshot.current ??= { month, selectedDate, view, filters, selectedEventId, selectedReferenceId, referenceLimit };
+      setFilters({ religion: '', district: '', keyword: '' });
+      setMonth(match.event.startDate.slice(0, 7));
+      setSelectedDate(match.event.startDate);
+      setSelectedEventId(match.event.id);
+      setSelectedReferenceId(undefined);
+      const frame = requestAnimationFrame(() => detailPanel.current?.focus());
+      return () => cancelAnimationFrame(frame);
+    }
+    const previous = relatedSnapshot.current;
+    if (previous) {
+      relatedSnapshot.current = undefined;
+      setMonth(previous.month); setSelectedDate(previous.selectedDate); setView(previous.view); setFilters(previous.filters);
+      setSelectedEventId(previous.selectedEventId); setSelectedReferenceId(previous.selectedReferenceId); setReferenceLimit(previous.referenceLimit);
+    }
+    // A new request is an explicit visit; language and local reading changes do not replay it.
+  }, [relatedSelection, resolved]);
 
   useEffect(() => {
     const update = () => setToday(getTaipeiToday());
@@ -75,7 +100,7 @@ export default function ReligiousCalendar({ organizations, language, onViewMap, 
   const chooseEvent = (id: string) => { setSelectedEventId(id); setSelectedReferenceId(undefined); };
   const actions = (organization: ReligiousOrganization) => <div className="calendar-place-actions">
     <button className="text-button" onClick={() => onViewMap(organization)}>{t.map}</button>
-    <button className="primary-button" onClick={event => { event.currentTarget.focus(); onExplore(organization); }}>{t.explore}</button>
+    <button className="primary-button" data-explore-organization={organization.id} onClick={event => { event.currentTarget.focus(); onExplore(organization); }}>{t.explore}</button>
   </div>;
   const eventButton = (id: string) => {
     const event = filteredEvents.find(item => item.event.id === id)?.event;

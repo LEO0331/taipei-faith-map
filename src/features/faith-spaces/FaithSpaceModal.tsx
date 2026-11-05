@@ -9,6 +9,7 @@ import { GuidedTourControls, tourLabels } from './GuidedTourControls';
 import { PlaceProfilePanel } from './PlaceProfilePanel';
 import { TraditionIntroduction } from './TraditionIntroduction';
 import './faith-spaces.css';
+import type { RelatedCulturalTarget } from '../../components/relatedContentTypes';
 
 type Props = {
   organization: ReligiousOrganization;
@@ -16,7 +17,26 @@ type Props = {
   onLanguageChange: (language: Language) => void;
   onClose: () => void;
   initialPanel?: 'scene' | 'place';
+  organizations?: ReligiousOrganization[];
+  onNavigateRelated?: (target: RelatedCulturalTarget) => void | Promise<void>;
 };
+
+/** Match the controls a browser can actually tab to, including disclosure state. */
+function tabbableControls(root: HTMLElement) {
+  return [...root.querySelectorAll<HTMLElement>('button, summary, a[href], input, select, textarea, [tabindex]')].filter(control => {
+    if (control.tabIndex < 0 || control.matches(':disabled') || control.closest('[hidden], [inert]')) return false;
+    for (let ancestor: HTMLElement | null = control; ancestor; ancestor = ancestor.parentElement) {
+      const style = getComputedStyle(ancestor);
+      if (style.display === 'none' || style.visibility === 'hidden' || style.visibility === 'collapse') return false;
+      if (ancestor instanceof HTMLDetailsElement && !ancestor.open) {
+        const summary = [...ancestor.children].find(child => child.tagName === 'SUMMARY');
+        if (!summary?.contains(control)) return false;
+      }
+      if (ancestor === root) break;
+    }
+    return true;
+  });
+}
 
 const labels = {
   zh: {
@@ -39,7 +59,7 @@ const labels = {
   },
 };
 
-export default function FaithSpaceModal({ organization, language, onLanguageChange, onClose, initialPanel = 'scene' }: Props) {
+export default function FaithSpaceModal({ organization, language, onLanguageChange, onClose, initialPanel = 'scene', organizations, onNavigateRelated }: Props) {
   const config = getFaithSpaceConfig(organization.religion);
   const [selectedId, setSelectedId] = useState(config.hotspots[0].id);
   const [expanded, setExpanded] = useState(true);
@@ -75,8 +95,8 @@ export default function FaithSpaceModal({ organization, language, onLanguageChan
   };
 
   useEffect(() => {
-    if (guided) tourNextButton.current?.focus({ preventScroll: true });
-    else if (previouslyGuided.current && document.activeElement === document.body) freeModeButton.current?.focus({ preventScroll: true });
+    if (guided) tourNextButton.current?.focus();
+    else if (previouslyGuided.current && document.activeElement === document.body) freeModeButton.current?.focus();
     previouslyGuided.current = guided;
   }, [guided]);
 
@@ -100,7 +120,7 @@ export default function FaithSpaceModal({ organization, language, onLanguageChan
         onKeyDown={event => {
           if (event.key === 'Escape') { event.stopPropagation(); onClose(); }
           if (event.key !== 'Tab') return;
-          const controls = [...(dialog.current?.querySelectorAll<HTMLElement>('button, summary, a[href], [tabindex="0"]') ?? [])].filter(control => !control.matches(':disabled') && !control.closest('[hidden]'));
+          const controls = dialog.current ? tabbableControls(dialog.current) : [];
           const first = controls[0];
           const last = controls[controls.length - 1];
           if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last?.focus(); }
@@ -167,7 +187,7 @@ export default function FaithSpaceModal({ organization, language, onLanguageChan
             <ReflectionTimer language={language} />
             <div className="faith-location"><p className="faith-overline">{t.facts}</p><p>{organization.district}{organization.village ? ` · ${organization.village}` : ''}</p><p>{organization.address}</p></div>
             </section>
-            {panel === 'place' && <PlaceProfilePanel organization={organization} language={language} />}
+            {panel === 'place' && <PlaceProfilePanel organization={organization} language={language} organizations={organizations} onNavigateRelated={onNavigateRelated} />}
           </aside>
         </div>
       </div>

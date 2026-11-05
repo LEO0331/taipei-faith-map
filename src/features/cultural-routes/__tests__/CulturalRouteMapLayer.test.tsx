@@ -245,4 +245,35 @@ describe('shared map route and calendar layers', () => {
     expect(state.operations).toEqual(['fit', 'view', 'view']);
     expect(state.views).toEqual([[25.05, 121.54, 12], [25.04, 121.51, 15]]);
   });
+
+  it('restores a related calendar map visit without labelling the current event as historical', () => {
+    const onExplore = vi.fn();
+    const { rerender } = render(<ReligiousOrganizationMap items={[]} language="en" onExplore={onExplore} focusRequest={{ organization: second, token: 1, temporary: true, historical: false }} />);
+    expect(state.container.textContent).not.toContain('historical coordinates');
+    expect(state.instances[0].getElement().getAttribute('aria-label')).toBe(second.name);
+    rerender(<ReligiousOrganizationMap items={[]} language="en" onExplore={onExplore} />);
+    expect(state.views).toEqual([[25.04, 121.51, 15], [25.05, 121.54, 12]]);
+  });
+
+  it('restores a prior place highlight without overriding the restored map viewport', () => {
+    const onExplore = vi.fn();
+    const { rerender } = render(<ReligiousOrganizationMap items={[]} language="en" onExplore={onExplore} focusRequest={{ organization: second, token: 2, temporary: true, historical: false }} />);
+    rerender(<ReligiousOrganizationMap items={[]} language="zh" onExplore={onExplore} focusRequest={{ organization: first, token: 1, preserveViewport: true }} />);
+    expect(state.views).toEqual([[25.04, 121.51, 15], [25.05, 121.54, 12]]);
+    expect(state.instances[state.instances.length - 1].getPopup().getElement()?.querySelector('h3')?.textContent).toBe(first.name);
+  });
+
+  it('localizes zoom control names without moving or remounting the map', () => {
+    const zoomIn = document.createElement('a'), zoomOut = document.createElement('a');
+    zoomIn.className = 'leaflet-control-zoom-in'; zoomOut.className = 'leaflet-control-zoom-out';
+    state.container.append(zoomIn, zoomOut);
+    const onExplore = vi.fn();
+    const { rerender } = render(<ReligiousOrganizationMap items={[]} language="zh" onExplore={onExplore} />);
+    expect(zoomIn.getAttribute('aria-label')).toBe('放大地圖');
+    expect(zoomOut.title).toBe('縮小地圖');
+    rerender(<ReligiousOrganizationMap items={[]} language="en" onExplore={onExplore} />);
+    expect(zoomIn.getAttribute('aria-label')).toBe('Zoom in');
+    expect(zoomOut.title).toBe('Zoom out');
+    expect(state.views).toEqual([]); expect(state.fits).toEqual([]);
+  });
 });

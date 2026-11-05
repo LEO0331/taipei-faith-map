@@ -130,7 +130,7 @@ export default function CulturalRoutes({ organizations, language, selectedRoute,
         <div className="route-stop-actions">
           <button className="text-button" disabled={currentIndex === 0} onClick={() => moveStop(currentIndex - 1)}>{t.previous}</button>
           <button className="text-button" disabled={currentIndex === selected.organizations.length - 1} onClick={() => moveStop(currentIndex + 1)}>{t.next}</button>
-          <button className="primary-button" onClick={event => { event.currentTarget.focus(); onExplore(activeOrganization); }}>{translations[language].exploreFaithSpace}</button>
+          <button className="primary-button" data-explore-organization={activeOrganization.id} onClick={event => { event.currentTarget.focus(); onExplore(activeOrganization); }}>{translations[language].exploreFaithSpace}</button>
         </div>
         <CulturalSourceList sources={activeStop.sourceReferences} language={language} />
       </article>}

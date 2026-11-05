@@ -50,7 +50,7 @@
 .festival-reference > span:not(.calendar-status) { font-size: 13px; line-height: 1.8; }
 .festival-reference small { color: #706358; line-height: 1.7; }
 .religious-calendar .cultural-sources { border-left: 2px solid #9c7245; padding-left: 12px; margin-top: 20px; }
-.religious-calendar .cultural-sources h4 { font-size: 12px; margin-bottom: 8px; }
+.religious-calendar .cultural-sources .cultural-source-heading { font-size: 12px; margin-bottom: 8px; }
 .religious-calendar .cultural-sources ul { list-style: none; padding-left: 0; }
 .religious-calendar .cultural-sources a { font-size: 12px; overflow-wrap: anywhere; text-decoration: underline; color: #0f766e; display: inline-block; padding-block: 8px; }
 .religious-calendar .cultural-source-meta { font-size: 11px; color: #706358; margin: 2px 0; }

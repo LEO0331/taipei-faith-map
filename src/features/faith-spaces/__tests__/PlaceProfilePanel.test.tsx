@@ -7,6 +7,7 @@ import type { PlaceProfile, SourceReference } from '../placeProfileTypes';
 import type { ReligiousOrganization } from '../../../types';
 
 vi.mock('../placeProfileLookup', () => ({ getPlaceProfile: vi.fn() }));
+vi.mock('../../../components/RelatedCulturalContent', () => ({ RelatedCulturalContent: () => { throw new Error('Optional discovery chunk unavailable'); } }));
 
 const organization: ReligiousOrganization = {
   id: 'example-place', name: '登記名稱', religion: '道教', district: '松山區', address: '登記地址1號',
@@ -28,6 +29,19 @@ beforeEach(() => vi.mocked(getPlaceProfile).mockReturnValue(profile));
 afterEach(() => { cleanup(); vi.clearAllMocks(); });
 
 describe('verified place profile panel', () => {
+  it('keeps the profile and its evidence readable when optional related content fails', async () => {
+    const spy = vi.spyOn(console, 'error').mockImplementation(() => undefined);
+    try {
+      const { rerender } = render(<PlaceProfilePanel organization={organization} organizations={[organization]} language="en" onNavigateRelated={vi.fn()} />);
+      await screen.findByText('Related cultural content is unavailable. The place profile and sources remain available.');
+      expect(screen.getByText(profile.introduction.en)).toBeTruthy();
+      expect(screen.getByRole('link', { name: /Institutional history/ })).toBeTruthy();
+      expect(screen.getByRole('region', { name: 'Public Open Data · Registration' })).toBeTruthy();
+      rerender(<PlaceProfilePanel organization={organization} organizations={[organization]} language="zh" onNavigateRelated={vi.fn()} />);
+      expect(screen.getByText('相關文化內容暫時無法載入，場所介紹與資料來源仍可閱讀。')).toBeTruthy();
+      expect(screen.getByText(profile.introduction.zh)).toBeTruthy();
+    } finally { spy.mockRestore(); }
+  });
   it('keeps introduction and individual claims connected to evidence and labels editorial review', () => {
     const { container } = render(<PlaceProfilePanel organization={organization} language="en" />);
     expect(getPlaceProfile).toHaveBeenCalledWith(organization);

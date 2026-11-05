@@ -2,15 +2,16 @@ import type { ReligiousOrganization } from '../../types';
 import { checkEditorial, checkLocalized, checkSources, nonempty, resolveOrganizationIdentity } from '../../utils/curatedContent';
 import { isCoordinateOutlier } from '../../utils/geo';
 import type { CulturalRoute } from './routeTypes';
+import { getRegistrationStatusObservation } from '../content-quality/dataQuality';
 
 export function hasValidRouteCoordinates(organization: Pick<ReligiousOrganization, 'latitude' | 'longitude'>): boolean {
   return Number.isFinite(organization.latitude) && Number.isFinite(organization.longitude)
     && !isCoordinateOutlier(organization.longitude, organization.latitude);
 }
 
-/** A registration marked inactive is not evidence of a currently visitable place. */
+/** Qualified source wording requires verification; it does not establish current status. */
 export function isInactiveOrganization(name: string): boolean {
-  return /廢止|撤銷|撤消|解散|改隸|revoked|invalid|dissolved/iu.test(name);
+  return !!getRegistrationStatusObservation(name);
 }
 
 export function validateCulturalRoutes(routes: CulturalRoute[], organizations: ReligiousOrganization[]): string[] {
@@ -45,7 +46,7 @@ export function validateCulturalRoutes(routes: CulturalRoute[], organizations: R
       if (!matched) errors.push(`${stopPath}: missing, stale or ambiguous organization identity`);
       else {
         if (!hasValidRouteCoordinates(matched) || matched.isCoordinateOutlier) errors.push(`${stopPath}: invalid Taipei coordinates`);
-        if (isInactiveOrganization(matched.name)) errors.push(`${stopPath}: inactive registration requires separate current verification; excluded from routes`);
+        if (isInactiveOrganization(matched.name)) errors.push(`${stopPath}: registration-status annotation requires separate current verification; excluded from routes`);
       }
       if (!route.districtLabels?.includes(stop.district)) errors.push(`${stopPath}: district not represented in route labels`);
     }

@@ -69,4 +69,29 @@ describe('Faith Space dialog', () => {
     outside.remove();
     document.body.style.overflow = '';
   });
+
+  it('wraps focus around visible controls and skips closed disclosures, CSS-hidden controls and negative tab stops', () => {
+    render(<FaithSpaceModal organization={organization} language="en" onClose={vi.fn()} onLanguageChange={vi.fn()} />);
+    const dialog = screen.getByRole('dialog');
+    const disclosure = document.createElement('details');
+    disclosure.innerHTML = '<summary>Additional information</summary><a href="https://example.org">Collapsed source</a>';
+    dialog.append(disclosure);
+    const hidden = document.createElement('button');
+    hidden.style.display = 'none';
+    hidden.textContent = 'Hidden control';
+    dialog.append(hidden);
+    const programmatic = document.createElement('button');
+    programmatic.tabIndex = -1;
+    programmatic.textContent = 'Programmatic control';
+    dialog.append(programmatic);
+    const close = screen.getByRole('button', { name: 'Close Faith Space' });
+    close.focus();
+    fireEvent.keyDown(close, { key: 'Tab', shiftKey: true });
+    expect(document.activeElement).toBe(disclosure.querySelector('summary'));
+    fireEvent.keyDown(document.activeElement!, { key: 'Tab' });
+    expect(document.activeElement).toBe(close);
+    disclosure.open = true;
+    fireEvent.keyDown(close, { key: 'Tab', shiftKey: true });
+    expect(document.activeElement).toBe(disclosure.querySelector('a'));
+  });
 });

@@ -9,9 +9,10 @@ const labels = {
 };
 
 /** Evidence stays beside the claim it supports; invalid destinations are never rendered. */
-export function CulturalSourceList({ sources, language }: { sources: SourceReference[]; language: Language }) {
+export function CulturalSourceList({ sources, language, headingLevel = 4 }: { sources: SourceReference[]; language: Language; headingLevel?: 3 | 4 | 5 | 6 }) {
   const headingId = useId();
   const t = labels[language];
+  const Heading = `h${headingLevel}` as 'h3' | 'h4' | 'h5' | 'h6';
   const links = sources.flatMap(source => {
     const href = getSafeSourceUrl(source.url);
     return href ? [{ source, href, host: new URL(href).hostname }] : [];
@@ -20,9 +21,9 @@ export function CulturalSourceList({ sources, language }: { sources: SourceRefer
   if (links.length === 0) return null;
 
   return (
-    <section className="cultural-sources" aria-labelledby={headingId}>
-      <h4 id={headingId}>{t.sources}</h4>
-      <ul>
+    <div className="cultural-sources">
+      <Heading className="cultural-source-heading" id={headingId}>{t.sources}</Heading>
+      <ul aria-labelledby={headingId}>
         {links.map(({ source, href, host }) => (
           <li key={`${source.id}:${href}`}>
             <a href={href} target="_blank" rel="noopener noreferrer"
@@ -34,6 +35,6 @@ export function CulturalSourceList({ sources, language }: { sources: SourceRefer
           </li>
         ))}
       </ul>
-    </section>
+    </div>
   );
 }
