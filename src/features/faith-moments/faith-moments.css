@@ -1,0 +1,32 @@
+.faith-visitor { position: absolute; pointer-events: none; width: clamp(36px, 6%, 62px); transform: translate(-50%, -100%); z-index: 2; }
+.faith-visitor svg { display: block; width: 100%; overflow: visible; }
+.faith-scene .faith-hotspot { z-index: 3; }
+.faith-visitor.visitor-motion.visitor-walk { transition: left 600ms ease, top 600ms ease; }
+.visitor-figure, .visitor-left-leg, .visitor-right-leg, .visitor-right-arm, .visitor-right-hand { transform-box: fill-box; transform-origin: center; }
+.visitor-motion.visitor-walk .visitor-left-leg { animation: visitor-step-left 200ms ease-in-out 3; }
+.visitor-motion.visitor-walk .visitor-right-leg { animation: visitor-step-right 200ms ease-in-out 3; }
+.visitor-wave .visitor-right-arm { transform: rotate(-110deg); transform-origin: 2px 2px; }
+.visitor-wave .visitor-right-hand { transform: translate(-4px, -34px); }
+.visitor-motion.visitor-wave .visitor-right-arm { animation: visitor-wave 500ms ease-in-out 1; }
+.visitor-sit .visitor-figure { transform: translateY(13px); }
+.visitor-sit .visitor-left-leg { transform: rotate(-65deg) translate(-4px, -6px); }
+.visitor-sit .visitor-right-leg { transform: rotate(65deg) translate(4px, -6px); }
+.visitor-motion.visitor-sit .visitor-figure { animation: visitor-settle 350ms ease-out 1; }
+.visitor-observe .visitor-figure { transform: rotate(-4deg); transform-origin: 50% 90%; }
+.visitor-motion.visitor-observe .visitor-figure { animation: visitor-look 500ms ease-in-out 1; }
+.visitor-actions { margin-top: 18px; padding: 16px; border: 1px solid var(--faith-line, #dcd4c7); border-radius: 8px; background: #f2ecdf; }
+.visitor-actions h3 { margin: 0 0 12px; font-size: 15px; font-weight: 600; }
+.visitor-action-buttons, .visitor-motion-buttons { display: flex; gap: 8px; flex-wrap: wrap; }
+.visitor-motion-buttons { margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--faith-line, #dcd4c7); }
+.visitor-motion-compact { margin: 0 0 0 auto; padding: 0; border: 0; }
+.visitor-motion-compact button { font-size: 12px; }
+.visitor-motion-compact [aria-pressed="true"] { background: var(--faith-accent); border-color: var(--faith-accent); color: #fff; }
+.visitor-actions button { min-height: 44px; font-size: 12px; }
+.visitor-actions button[aria-pressed="true"] { background: var(--faith-accent, #50665c); border-color: var(--faith-accent, #50665c); color: #fff; }
+.visitor-actions p { color: #706358; font-size: 11px; line-height: 1.8; margin-bottom: 0; }
+@keyframes visitor-step-left { 0%,100% { transform: rotate(-8deg); } 50% { transform: rotate(8deg); } }
+@keyframes visitor-step-right { 0%,100% { transform: rotate(8deg); } 50% { transform: rotate(-8deg); } }
+@keyframes visitor-wave { 0%,100% { transform: rotate(-110deg); } 35%,70% { transform: rotate(-128deg); } 50%,85% { transform: rotate(-98deg); } }
+@keyframes visitor-settle { from { transform: translateY(0); } to { transform: translateY(13px); } }
+@keyframes visitor-look { 0%,100% { transform: rotate(0); } 50% { transform: rotate(-4deg); } }
+@media (prefers-reduced-motion: reduce) { .faith-visitor, .faith-visitor * { animation: none !important; transition: none !important; } }
