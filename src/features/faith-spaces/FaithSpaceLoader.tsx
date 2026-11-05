@@ -17,6 +17,7 @@ export class FaithSpaceBoundary extends Component<Props & { children: ReactNode 
 /** A cancellable, keyboard-accessible shell while the optional scene chunk loads. */
 export function FaithSpaceStatus({ language, onClose, failed = false }: Props & { failed?: boolean }) {
   const button = useRef<HTMLButtonElement>(null);
+  const dialog = useRef<HTMLDivElement>(null);
   const message = failed
     ? language === 'zh' ? '信仰空間載入失敗，請返回地圖後重新整理再試。' : 'Faith Space could not load. Return to the map and refresh to try again.'
     : language === 'zh' ? '載入信仰空間…' : 'Loading Faith Space…';
@@ -25,10 +26,14 @@ export function FaithSpaceStatus({ language, onClose, failed = false }: Props & 
     const previous = document.body.style.overflow;
     document.body.style.overflow = 'hidden';
     button.current?.focus();
-    return () => { document.body.style.overflow = previous; };
+    const containFocus = (event: FocusEvent) => {
+      if (event.target instanceof Node && !dialog.current?.contains(event.target)) button.current?.focus();
+    };
+    document.addEventListener('focusin', containFocus);
+    return () => { document.body.style.overflow = previous; document.removeEventListener('focusin', containFocus); };
   }, []);
 
-  return <div className="faith-loading" role="dialog" aria-modal="true" aria-label={message}
+  return <div ref={dialog} className="faith-loading" role="dialog" aria-modal="true" aria-label={message}
     onKeyDown={event => {
       if (event.key === 'Escape') onClose();
       if (event.key === 'Tab') { event.preventDefault(); button.current?.focus(); }

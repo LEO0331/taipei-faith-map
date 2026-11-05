@@ -12,6 +12,9 @@
 }
 
 .app [hidden] { display: none !important; }
+.skip-link { position: absolute; z-index: 2500; inset: 12px auto auto 12px; transform: translateY(-180%); padding: 12px 18px; background: #fff; border: 2px solid #0f766e; border-radius: 4px; }
+.skip-link:focus { transform: none; }
+#main-content:focus-visible { outline: 3px solid #0f766e; outline-offset: -3px; }
 .visually-hidden { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; border: 0; }
 .discovery-navigation { display: flex; flex-wrap: wrap; gap: 6px; padding: 12px 1rem; border-bottom: 1px solid #d9e2ec; background: #fff; }
 .discovery-navigation button { min-height: 44px; padding: 8px 18px; border: 1px solid transparent; border-radius: 6px; background: transparent; color: #475569; cursor: pointer; }

@@ -26,7 +26,7 @@ export function GuidedTourControls({ language, index, total, completed, onPrevio
     <div className="faith-tour-actions">
       <button className="faith-button" disabled={index === 0 && !completed} onClick={() => {
         onPrevious();
-        if (index === 1 && !completed) nextButtonRef.current?.focus({ preventScroll: true });
+        if (index === 1 && !completed) nextButtonRef.current?.focus();
       }}>{t.previous}</button>
       {completed
         ? <button ref={nextButtonRef} className="faith-button faith-button-primary" onClick={onRestart}>{t.restart}</button>

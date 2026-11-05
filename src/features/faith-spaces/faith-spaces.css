@@ -56,10 +56,19 @@
 .reflection-timer output { display: block; font-family: Georgia, serif; font-size: 38px; letter-spacing: .04em; margin: 10px 0; font-variant-numeric: tabular-nums; }
 .faith-location { border-top: 1px solid var(--faith-line); padding-top: 18px; margin-top: 22px; }
 .faith-location p:not(.faith-overline) { color: #706358; font-size: 12px; margin: 4px 0 0; }
+.related-cultural-content { border-top: 1px solid var(--faith-line); margin-top: 24px; padding-top: 18px; }
+.related-cultural-content h3 { font-family: Georgia, 'Noto Serif TC', serif; font-weight: 500; font-size: 21px; }
+.related-cultural-content ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+.related-cultural-link { display: block; width: 100%; text-align: left; line-height: 1.7; padding: 10px 12px; overflow-wrap: anywhere; }
+.related-cultural-kind { display: block; color: var(--faith-accent); font-size: 11px; font-weight: 700; }
+.related-cultural-link strong, .related-cultural-link small { display: block; }
+.related-cultural-link small { margin-top: 4px; font-size: 12px; color: #706358; }
+.related-cultural-notice { color: #706358; font-size: 12px; line-height: 1.8; }
 .faith-overlay :focus-visible { outline: 3px solid var(--faith-accent); outline-offset: 5px; }
 .faith-hotspot:focus-visible { outline-color: #fff; box-shadow: 0 0 0 8px var(--faith-accent); }
 .reflection-presets button[aria-pressed="true"] { background: var(--faith-ink); color: #fff; border-color: var(--faith-ink); }
 .faith-overlay [hidden] { display: none !important; }
+.faith-overlay a { min-height: 44px; }
 .faith-content-navigation, .faith-exploration-modes { display: flex; flex-wrap: wrap; gap: 8px; }
 .faith-content-navigation { padding-bottom: 24px; }
 .faith-content-navigation .faith-button { border-color: var(--faith-line); }
@@ -86,7 +95,7 @@
 .place-fact { border-top: 1px solid var(--faith-line); margin-top: 24px; padding-top: 18px; }
 .place-fact h3, .faith-tradition h3 { font-size: 18px; font-weight: 600; line-height: 1.5; margin: 0 0 10px; }
 .cultural-sources { background: #eee8dd; border-left: 2px solid var(--faith-accent); padding: 12px 14px; margin: 14px 0; }
-.cultural-sources h4 { margin: 0 0 8px; font-size: 11px; letter-spacing: .05em; color: var(--faith-accent); }
+.cultural-sources .cultural-source-heading { margin: 0 0 8px; font-family: inherit; font-weight: 700; font-size: 11px; letter-spacing: .05em; color: var(--faith-accent); }
 .cultural-sources ul { padding: 0; margin: 0; list-style: none; }
 .cultural-sources li + li { margin-top: 12px; }
 .cultural-sources a { color: var(--faith-accent); font-size: 13px; line-height: 1.7; text-decoration: underline; text-underline-offset: 3px; display: inline-block; padding-block: 8px; overflow-wrap: anywhere; }

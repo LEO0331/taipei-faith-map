@@ -52,7 +52,11 @@ describe('curated walking route identities and evidence', () => {
     const inactiveName = `${route.stops[0].organizationName}(已廢止)`;
     const inactive = organizations.map(item => item.id === firstId ? { ...item, name: inactiveName } : item);
     const inactiveRoute = { ...route, stops: route.stops.map((stop, index) => index === 0 ? { ...stop, organizationName: inactiveName } : stop) };
-    expect(validateCulturalRoutes([inactiveRoute], inactive).join(' ')).toContain('inactive registration');
+    expect(validateCulturalRoutes([inactiveRoute], inactive).join(' ')).toContain('registration-status annotation');
+    const historicalName = `廢止制度研究${route.stops[0].organizationName}`;
+    const unusualRecords = organizations.map(item => item.id === firstId ? { ...item, name: historicalName } : item);
+    const unusualRoute = { ...route, stops: route.stops.map((stop, index) => index === 0 ? { ...stop, organizationName: historicalName } : stop) };
+    expect(validateCulturalRoutes([unusualRoute], unusualRecords)).toEqual([]);
   });
 
   it('checks bilingual fields, source URLs, district coverage and review metadata', () => {

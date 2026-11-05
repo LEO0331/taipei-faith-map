@@ -6,6 +6,7 @@ import { getPlaceProfile } from '../faith-spaces/placeProfileLookup';
 import { getAvailableRoutes } from '../cultural-routes/routeLookup';
 import { formatHistoricalDate, getAvailableHeritage, resolveHeritagePlaces, sortHistoricalMilestones } from './heritageLookup';
 import type { HeritageContent as HeritageData, HeritageStory, HistoricalMilestone } from './heritageTypes';
+import type { RelatedSelectionRequest } from '../../components/relatedContentTypes';
 import './heritage.css';
 
 type Filters = { religion: string; district: string; theme: string };
@@ -17,6 +18,8 @@ type Props = {
   onOpenProfile: (organization: ReligiousOrganization) => void;
   onOpenRoute: (routeId: string) => void;
   data?: HeritageData;
+  relatedSelection?: RelatedSelectionRequest;
+  onReturnRelated?: () => void;
 };
 const emptyFilters = (): Filters => ({ religion: '', district: '', theme: '' });
 const labels = {
@@ -56,7 +59,7 @@ const labels = {
   },
 };
 
-export default function HeritageExplorer({ organizations, language, onViewMap, onExplore, onOpenProfile, onOpenRoute, data }: Props) {
+export default function HeritageExplorer({ organizations, language, onViewMap, onExplore, onOpenProfile, onOpenRoute, data, relatedSelection, onReturnRelated }: Props) {
   const available = useMemo(() => getAvailableHeritage(organizations, data), [organizations, data]);
   const availableRoutes = useMemo(() => getAvailableRoutes(organizations), [organizations]);
   const ordered = useMemo(() => sortHistoricalMilestones(available.milestones), [available.milestones]);
@@ -70,9 +73,11 @@ export default function HeritageExplorer({ organizations, language, onViewMap, o
   const detailHeading = useRef<HTMLHeadingElement>(null);
   const storyHeading = useRef<HTMLHeadingElement>(null);
   const pendingFocus = useRef(false);
+  const relatedSnapshot = useRef<{ view: 'timeline' | 'stories'; filters: Filters; selectedId?: string; storyId?: string; stage: number; origin: typeof origin.current } | undefined>(undefined);
   const headingId = useId();
   const detailId = useId();
   const activeHeadingId = useId();
+  const datePrefix = useId();
   const t = labels[language];
   const placeOrganizations = useMemo(() => resolveHeritagePlaces(available.places.map(place => place.organizationId), available.places, organizations), [available.places, organizations]);
   const religions = [...new Set([...placeOrganizations.map(organization => organization.religion), ...available.milestones.flatMap(milestone => milestone.religions ?? [])])];
@@ -90,6 +95,28 @@ export default function HeritageExplorer({ organizations, language, onViewMap, o
   const concluded = !!story && stage >= story.chapters.length;
 
   useEffect(() => {
+    const target = relatedSelection?.target;
+    if (target?.kind === 'milestone' || target?.kind === 'story') {
+      const valid = target.kind === 'milestone'
+        ? available.milestones.some(item => item.id === target.id && item.organizationIds.includes(target.organizationId))
+        : available.stories.some(item => item.id === target.id && item.chapters.some(chapter => chapter.organizationIds.includes(target.organizationId)));
+      if (!valid) return;
+      relatedSnapshot.current ??= { view, filters, selectedId, storyId, stage, origin: origin.current };
+      pendingFocus.current = true;
+      if (target.kind === 'milestone') { setFilters(emptyFilters()); setSelectedId(target.id); setView('timeline'); }
+      else { setStoryId(target.id); setStage(-1); setView('stories'); }
+      const frame = requestAnimationFrame(() => (target.kind === 'milestone' ? detailHeading : storyHeading).current?.focus());
+      return () => cancelAnimationFrame(frame);
+    }
+    const previous = relatedSnapshot.current;
+    if (previous) {
+      relatedSnapshot.current = undefined; pendingFocus.current = false;
+      setView(previous.view); setFilters(previous.filters); setSelectedId(previous.selectedId);
+      setStoryId(previous.storyId); setStage(previous.stage); origin.current = previous.origin;
+    }
+  }, [relatedSelection, available]);
+
+  useEffect(() => {
     if (!pendingFocus.current) return;
     (view === 'stories' && story ? storyHeading : detailHeading).current?.focus();
     pendingFocus.current = false;
@@ -105,6 +132,7 @@ export default function HeritageExplorer({ organizations, language, onViewMap, o
     setStoryId(nextStory.id); setStage(-1); setView('stories'); pendingFocus.current = true;
   };
   const exitStory = () => {
+    if (relatedSelection && onReturnRelated) { onReturnRelated(); return; }
     const previous = origin.current;
     setStoryId(undefined); setStage(-1);
     if (previous) { setView(previous.view); setSelectedId(previous.selectedId); setFilters(previous.filters); }
@@ -121,17 +149,17 @@ export default function HeritageExplorer({ organizations, language, onViewMap, o
     return <section className="heritage-related-places" aria-label={t.places}>
       <h4>{t.places}</h4>
       {!places.length && <p>{t.noPlace}</p>}
-      {places.length > 1 && <button className="text-button" onClick={event => { event.currentTarget.focus(); onViewMap(places); }}>{t.allPlaces}</button>}
+      {places.length > 1 && <button className="text-button" data-view-current-organizations={JSON.stringify(places.map(place => place.id))} onClick={event => { event.currentTarget.focus(); onViewMap(places); }}>{t.allPlaces}</button>}
       {places.map(organization => {
         const reference = available.places.find(place => place.organizationId === organization.id)!;
         return <article className="heritage-place" key={organization.id}>
           <h5>{organization.name}</h5><p className="heritage-current-address">{organization.district} · {organization.address}</p><p>{reference.relationship[language]}</p>
           <div className="heritage-place-actions">
-            <button className="text-button" onClick={event => { event.currentTarget.focus(); onViewMap([organization]); }}>{t.currentMap}</button>
-            <button className="primary-button" onClick={event => { event.currentTarget.focus(); onExplore(organization); }}>{translations[language].exploreFaithSpace}</button>
-            {getPlaceProfile(organization) && <button className="text-button" onClick={event => { event.currentTarget.focus(); onOpenProfile(organization); }}>{t.profile}</button>}
+            <button className="text-button" data-view-current-organizations={JSON.stringify([organization.id])} onClick={event => { event.currentTarget.focus(); onViewMap([organization]); }}>{t.currentMap}</button>
+            <button className="primary-button" data-explore-organization={organization.id} onClick={event => { event.currentTarget.focus(); onExplore(organization); }}>{translations[language].exploreFaithSpace}</button>
+            {getPlaceProfile(organization) && <button className="text-button" data-open-profile-organization={organization.id} onClick={event => { event.currentTarget.focus(); onOpenProfile(organization); }}>{t.profile}</button>}
           </div>
-          <CulturalSourceList sources={reference.sources} language={language} />
+          <CulturalSourceList sources={reference.sources} language={language} headingLevel={6} />
         </article>;
       })}
     </section>;
@@ -139,7 +167,7 @@ export default function HeritageExplorer({ organizations, language, onViewMap, o
   const relatedRoutes = (selectedStory: HeritageStory) => {
     const routes = availableRoutes.filter(item => selectedStory.routeIds?.includes(item.route.id));
     if (!routes.length) return null;
-    return <div className="heritage-related-routes">{routes.map(({ route }) => <button key={route.id} className="text-button" onClick={event => { event.currentTarget.focus(); onOpenRoute(route.id); }}>{t.route}: {route.title[language]}</button>)}</div>;
+    return <div className="heritage-related-routes">{routes.map(({ route }) => <button key={route.id} className="text-button" data-open-cultural-route={route.id} onClick={event => { event.currentTarget.focus(); onOpenRoute(route.id); }}>{t.route}: {route.title[language]}</button>)}</div>;
   };
 
   return <section className="heritage-explorer" aria-labelledby={headingId} ref={explorer}>
@@ -158,8 +186,8 @@ export default function HeritageExplorer({ organizations, language, onViewMap, o
       </div>
       {!visible.length ? <p className="status-text">{t.empty}</p> : <div className="heritage-timeline-layout">
         <ol className="heritage-timeline" aria-label={t.timeline}>{visible.map(milestone => <li key={milestone.id} className={selected?.id === milestone.id ? 'is-selected' : undefined}>
-          <p className="heritage-timeline-date">{formatHistoricalDate(milestone.date, language)}</p>{precision(milestone)}
-          <button aria-pressed={selected?.id === milestone.id} aria-controls={detailId} onClick={() => chooseMilestone(milestone.id)}>{milestone.title[language]}</button>
+          <div id={`${datePrefix}-${milestone.id}`}><p className="heritage-timeline-date">{formatHistoricalDate(milestone.date, language)}</p>{precision(milestone)}</div>
+          <button aria-pressed={selected?.id === milestone.id} aria-describedby={`${datePrefix}-${milestone.id}`} aria-controls={detailId} onClick={() => chooseMilestone(milestone.id)}>{milestone.title[language]}</button>
         </li>)}</ol>
         {selected && <article className="heritage-milestone-detail" id={detailId} aria-labelledby={activeHeadingId}>
           <p className="eyebrow">{t.selected}</p><p className="heritage-detail-date">{formatHistoricalDate(selected.date, language)} {precision(selected)}</p>
@@ -179,9 +207,9 @@ export default function HeritageExplorer({ organizations, language, onViewMap, o
       <div className="heritage-chapter-track" aria-hidden="true"><span style={{ width: `${stage < 0 ? 0 : concluded ? 100 : (stage + 1) / story.chapters.length * 100}%` }} /></div>
       <div className="heritage-chapter-content">
         <h4 ref={storyHeading} tabIndex={-1}>{stage < 0 ? t.introductionStage : chapter ? chapter.title[language] : t.conclusion}</h4>
-        {stage < 0 ? <><p>{story.introduction[language]}</p><CulturalSourceList sources={story.sources} language={language} />{review(story.lastReviewed)}</> : chapter ? <>
+        {stage < 0 ? <><p>{story.introduction[language]}</p><CulturalSourceList sources={story.sources} language={language} headingLevel={5} />{review(story.lastReviewed)}</> : chapter ? <>
           <p>{chapter.content[language]}</p>
-          {chapter.milestoneIds.length > 0 && <section className="heritage-chapter-milestones"><h5>{t.relatedMilestones}</h5>{chapter.milestoneIds.map(id => available.milestones.find(item => item.id === id)).filter((item): item is HistoricalMilestone => !!item).map(milestone => <article key={milestone.id}><p className="heritage-timeline-date">{formatHistoricalDate(milestone.date, language)} {precision(milestone)}</p><h6>{milestone.title[language]}</h6><p>{milestone.summary[language]}</p><button className="text-button" onClick={() => chooseMilestone(milestone.id, true)}>{t.onTimeline}: {milestone.title[language]}</button><CulturalSourceList sources={milestone.sources} language={language} /></article>)}</section>}
+          {chapter.milestoneIds.length > 0 && <section className="heritage-chapter-milestones"><h5>{t.relatedMilestones}</h5>{chapter.milestoneIds.map(id => available.milestones.find(item => item.id === id)).filter((item): item is HistoricalMilestone => !!item).map(milestone => <article key={milestone.id}><p className="heritage-timeline-date">{formatHistoricalDate(milestone.date, language)} {precision(milestone)}</p><h6>{milestone.title[language]}</h6><p>{milestone.summary[language]}</p><button className="text-button" onClick={() => chooseMilestone(milestone.id, true)}>{t.onTimeline}: {milestone.title[language]}</button><CulturalSourceList sources={milestone.sources} language={language} headingLevel={6} /></article>)}</section>}
           {mappedPlaces(chapter.organizationIds)}<CulturalSourceList sources={chapter.sources} language={language} />
         </> : <><p>{t.complete}</p>{relatedRoutes(story)}<CulturalSourceList sources={story.sources} language={language} />{review(story.lastReviewed)}</>}
       </div>

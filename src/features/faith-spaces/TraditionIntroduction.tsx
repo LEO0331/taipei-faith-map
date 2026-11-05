@@ -8,7 +8,7 @@ export function TraditionIntroduction({ religion, language }: { religion: Religi
   return <section className="faith-tradition" aria-label={content.title[language]}>
     <h2>{content.title[language]}</h2>
     <p>{content.introduction[language]}</p>
-    <CulturalSourceList sources={content.sources} language={language} />
+    <CulturalSourceList sources={content.sources} language={language} headingLevel={3} />
     {content.concepts.map(concept => <div key={concept.id}>
       <h3>{concept.title[language]}</h3><p>{concept.description[language]}</p>
       <CulturalSourceList sources={concept.sources} language={language} />

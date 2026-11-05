@@ -68,7 +68,7 @@ These are reading sequences across published accounts, not claims of an otherwis
 
 No archival photographs or external media are included because appropriate assets and reuse licenses were not verified. A publicly readable image does not imply permission to redistribute it. Existing original SVG scenes must not be presented as historical visual evidence. The feature does not reconstruct historic district boundaries, produce historic population maps or infer religious participation from registration counts.
 
-Prioritize renewed source checks, documented external cultural review and real-device visual/screen-reader evaluation for V1.4. Keep selections ephemeral and avoid religious-history browsing analytics. Add images only after recording their provenance, license, required attribution and connection to the specific claim.
+Prioritize renewed source checks, documented external cultural review and real-device visual/screen-reader evaluation in follow-up work. Keep selections ephemeral and avoid religious-history browsing analytics. Add images only after recording their provenance, license, required attribution and connection to the specific claim.
 
 ## 繁體中文
 
@@ -117,4 +117,14 @@ V1.3 的「歷史與故事」包含宗教歷史時間軸與臺北信仰文化故
 
 尚未核實適合的歷史照片及重用授權，因此本版不收錄外部影像；網頁可讀不表示可以再散布。原創 SVG 也不能當作歷史視覺證據。本功能不重建歷史行政邊界、不製作歷史人口圖，也不從登記數推定宗教參與。
 
-V1.4 宜優先重新核對來源、安排有紀錄的外部文化審閱及實機視覺／螢幕閱讀器評估。選擇狀態維持短暫，不新增宗教歷史閱讀分析。未來加入影像前，須記錄出處、授權、必要署名及影像與具體主張的關聯。
+後續宜優先重新核對來源、安排有紀錄的外部文化審閱及實機視覺／螢幕閱讀器評估。選擇狀態維持短暫，不新增宗教歷史閱讀分析。未來加入影像前，須記錄出處、授權、必要署名及影像與具體主張的關聯。
+
+## V1.4 audit and related reading / 稽核與延伸閱讀
+
+`npm run content:audit` now includes historical dates, milestones, stories, chapter references and the current-place manifest alongside the other curated modules. It reuses the existing validators and reports missing/duplicate references, inconsistent identities, bilingual/source metadata errors and editorial status. The 365-day reference-age flag is a prompt to recheck evidence, not a claim that a historical statement becomes false after a year. New profile checks dated 2026-11-05 do not automatically replace this collection's 2026-11-04 historical review metadata.
+
+A place profile's compact related-content section can lead to an existing milestone or story whose validated organization reference matches that place, and return to the originating profile afterward. Keep current-place coordinates, history and contemporary event dates distinct when connecting these views. See [content-audit.md](content-audit.md) and the [external cultural-review procedure](cultural-review-workflow.md). External review, real-device/screen-reader evaluation and archival-media licensing remain separate work; do not infer their completion from an offline audit.
+
+`npm run content:audit` 現在將歷史日期、里程碑、故事、章節引用與現址對照一併檢查，沿用既有驗證工具，報告缺漏／重複引用、身分不一致、雙語／來源資料錯誤與編輯狀態。一般來源365日的提醒是重新查核證據的工作提示，不表示歷史敘述滿一年就成為錯誤。2026-11-05的新場所介紹核對日期，不會自動取代歷史內容2026-11-04的既有資訊。
+
+場所介紹的精簡延伸內容可連到已驗證身分相符的既有史事或故事，再返回原介紹。連結各視圖時仍需區分現址座標、歷史與當代活動日期。詳見[稽核指南](content-audit.md)及[外部文化審閱程序](cultural-review-workflow.md)。外部審閱、實機／螢幕閱讀器評估與歷史媒體授權是不同工作，不能從離線稽核推定已完成。

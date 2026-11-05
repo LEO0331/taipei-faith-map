@@ -1,8 +1,22 @@
-import { useId } from 'react';
+import { Component, lazy, Suspense, useId } from 'react';
+import type { ReactNode } from 'react';
 import type { Language, ReligiousOrganization } from '../../types';
 import { religionLabels, translations } from '../../utils/i18n';
 import { CulturalSourceList } from './CulturalSourceList';
 import { getPlaceProfile } from './placeProfileLookup';
+import type { RelatedCulturalTarget } from '../../components/relatedContentTypes';
+const RelatedCulturalContent = lazy(() => import('../../components/RelatedCulturalContent').then(module => ({ default: module.RelatedCulturalContent })));
+
+/** The optional discovery chunk must not replace an already available profile. */
+class RelatedContentBoundary extends Component<{ language: Language; children: ReactNode }, { failed: boolean }> {
+  state = { failed: false };
+  static getDerivedStateFromError() { return { failed: true }; }
+  render() {
+    return this.state.failed ? <p className="faith-review-note" role="status">{this.props.language === 'zh'
+      ? '相關文化內容暫時無法載入，場所介紹與資料來源仍可閱讀。'
+      : 'Related cultural content is unavailable. The place profile and sources remain available.'}</p> : this.props.children;
+  }
+}
 
 const labels = {
   zh: {
@@ -21,7 +35,7 @@ const labels = {
   },
 };
 
-export function PlaceProfilePanel({ organization, language }: { organization: ReligiousOrganization; language: Language }) {
+export function PlaceProfilePanel({ organization, language, organizations, onNavigateRelated }: { organization: ReligiousOrganization; language: Language; organizations?: ReligiousOrganization[]; onNavigateRelated?: (target: RelatedCulturalTarget) => void | Promise<void> }) {
   const profile = getPlaceProfile(organization);
   const headingId = useId();
   const dataHeadingId = useId();
@@ -38,7 +52,7 @@ export function PlaceProfilePanel({ organization, language }: { organization: Re
         {profile ? (
           <>
             <p className="place-introduction">{profile.introduction[language]}</p>
-            <CulturalSourceList sources={profile.sources} language={language} />
+            <CulturalSourceList sources={profile.sources} language={language} headingLevel={3} />
             {profile.facts.map(fact => (
               <article className="place-fact" key={fact.id}>
                 <h3>{fact.title[language]}</h3>
@@ -53,6 +67,9 @@ export function PlaceProfilePanel({ organization, language }: { organization: Re
           </>
         ) : <p className="place-profile-unavailable">{t.unavailable}</p>}
       </section>
+      {organizations && onNavigateRelated && <RelatedContentBoundary language={language}><Suspense fallback={<p role="status">{language === 'zh' ? '載入相關文化探索…' : 'Loading related cultural content…'}</p>}>
+        <RelatedCulturalContent organization={organization} organizations={organizations} language={language} onNavigate={onNavigateRelated} />
+      </Suspense></RelatedContentBoundary>}
       <section className="faith-open-data" aria-labelledby={dataHeadingId}>
         <h3 id={dataHeadingId}>{t.openData}</h3>
         <dl>

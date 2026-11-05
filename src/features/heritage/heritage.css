@@ -36,7 +36,7 @@
 .heritage-place > p { font-size: 14px; }
 .heritage-review { color: #706358; font-size: 12px; border-top: 1px solid #dcd4c7; padding-top: 12px; margin-top: 18px; }
 .heritage-explorer .cultural-sources { border-left: 2px solid #8d6c47; background: #f0e9db; padding: 12px 16px; margin-top: 18px; }
-.heritage-explorer .cultural-sources h4 { font: 600 12px/1.7 ui-sans-serif, system-ui, sans-serif; color: #725431; margin: 0 0 6px; }
+.heritage-explorer .cultural-sources .cultural-source-heading { font: 600 12px/1.7 ui-sans-serif, system-ui, sans-serif; color: #725431; margin: 0 0 6px; }
 .heritage-explorer .cultural-sources ul { list-style: none; padding: 0; margin: 0; }
 .heritage-explorer .cultural-sources li + li { margin-top: 10px; }
 .heritage-explorer .cultural-sources a { color: #0f766e; text-decoration: underline; text-underline-offset: 3px; display: inline-flex; align-items: center; padding-block: 8px; overflow-wrap: anywhere; font-size: 13px; }

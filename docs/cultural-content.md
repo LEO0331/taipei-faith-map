@@ -157,3 +157,17 @@ The calendar and routes are a manually curated sample, not an exhaustive directo
 Historical milestones and heritage stories use separate modules under `src/features/heritage`; they are not current Calendar events or amendments to government registration data. The [historical-content contributor guide](historical-content.md) covers evidence precision, deterministic ordering, the strict current-place manifest, chapters without place links, existing-route references and the initial source inventory. Each milestone, story and chapter requires source evidence and honest review metadata. The collection does not imply verified historical coordinates, community endorsement or archival-image reuse rights.
 
 歷史里程碑與文化故事獨立存於 `src/features/heritage`，不是行事曆的當代活動，也不改寫政府登記紀錄。[歷史內容貢獻指南](historical-content.md)說明史料精度、固定排序、嚴格的現址對照、無場所連結章節、既有路線引用及首批來源。史事、故事與章節皆需來源與誠實的核對資訊；內容不暗示歷史座標已驗證、社群背書或歷史影像重用授權。
+
+## V1.4 quality workflow / 品質流程
+
+The collection now includes eight profiles. Qingshan Temple, Qingshui Temple, Xia-Hai City God Temple and Lee Chun-sheng Memorial Church were added with source checks dated **2026-11-05**; the original four profiles and other content retain their actual earlier dates. Do not reset all `verifiedAt` values merely because a release or audit ran. A source-link response alone is not proof that the page still supports a claim.
+
+Use `npm run content:audit -- --as-of YYYY-MM-DD` during a content revision. The [audit guide](content-audit.md) explains coverage, structural errors, advisory thresholds and reproducible output. Related-content links must resolve through existing identity and content validators, not religion/name similarity; preserve a return to the originating place. The [cultural-review workflow](cultural-review-workflow.md) describes how to prepare an external review and document its scope without claiming review or endorsement in advance.
+
+V1.4's Catholic research candidate illustrates the identity rule: a parish at Tonghua Street 178 and the registered order at Tonghua Street 172 were not treated as the same organization. Retain the unprofiled notice until the record's identity and location can be supported; the existing illustrative Catholic scene remains available. Content coverage is an editorial sample, not a measure of a tradition's importance.
+
+目前共八筆場所介紹。青山宮、清水巖、霞海城隍廟及李春生紀念教會新增內容於 **2026-11-05** 核對；原有四筆及其他內容保留實際較早日期。不要因發版或執行稽核就重設全部 `verifiedAt`。來源網址能回應，也不代表內容仍支持該主張。
+
+修訂內容時執行 `npm run content:audit -- --as-of YYYY-MM-DD`，[稽核指南](content-audit.md)說明涵蓋範圍、結構錯誤、提醒門檻與固定輸出。延伸內容必須通過既有身分及內容驗證，不能只憑教別或相似名稱連結，並應保留返回原場所的入口。[文化審閱流程](cultural-review-workflow.md)說明外部審閱的準備與紀錄，不預先宣稱已審閱或背書。
+
+本次天主教候選案例再次說明身分限制：通化街178號的堂區與172號的登記修會未被視為同一團體。無法證明資料集身分及地址時保留中性備援；文化內容收錄量不是宗教重要性的衡量。

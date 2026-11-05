@@ -46,6 +46,39 @@ const zhongshanHistory: SourceReference = {
   publisher: '台灣基督長老教會七星中會', verifiedAt: reviewed,
 };
 
+// V1.4 additions were checked separately; earlier review dates remain unchanged.
+const coverageReviewed = '2026-11-05';
+const qingshanHeritage: SourceReference = {
+  id: 'qingshan-profile-moi',
+  title: { zh: '內政部：艋舺青山宮文化資產介紹', en: 'Ministry of the Interior: Bangka Qingshan Temple heritage' },
+  url: 'https://taiwangods.moi.gov.tw/Religious_Culture/html/Cultural/3_0011.aspx?i=211',
+  publisher: '內政部', verifiedAt: coverageReviewed,
+};
+const qingshuiHeritage: SourceReference = {
+  id: 'qingshui-profile-moi',
+  title: { zh: '內政部：艋舺清水巖祖師廟文化資產介紹', en: 'Ministry of the Interior: Bangka Qingshui Temple heritage' },
+  url: 'https://taiwangods.moi.gov.tw/html/Cultural/3_0011.aspx?i=12',
+  publisher: '內政部', verifiedAt: coverageReviewed,
+};
+const xiahaiHeritage: SourceReference = {
+  id: 'xiahai-profile-moi',
+  title: { zh: '內政部：大稻埕霞海城隍廟文化資產介紹', en: 'Ministry of the Interior: Dadaocheng Xia-Hai City God Temple heritage' },
+  url: 'https://taiwangods.moi.gov.tw/Religious_Culture/html/Cultural/3_0011.aspx?i=58',
+  publisher: '內政部', verifiedAt: coverageReviewed,
+};
+const leeChurchDirectory: SourceReference = {
+  id: 'lee-church-profile-pct',
+  title: { zh: '台灣基督長老教會：李春生紀念教會資料', en: 'Presbyterian Church in Taiwan: Lee Chun-sheng Memorial Church directory' },
+  url: 'https://www.pct.org.tw/churchdata.aspx?strOrgNo=C03001',
+  publisher: '台灣基督長老教會', verifiedAt: coverageReviewed,
+};
+const leeChurchHeritage: SourceReference = {
+  id: 'lee-church-profile-moi',
+  title: { zh: '內政部：李春生紀念教會與大稻埕郵便電信支局', en: 'Ministry of the Interior: Lee Chun-sheng Memorial Church and former post office' },
+  url: 'https://taiwangods.moi.gov.tw/Religious_Culture/html/Cultural/3_0011.aspx?i=356',
+  publisher: '內政部', verifiedAt: coverageReviewed,
+};
+
 export const placeProfiles: PlaceProfile[] = [
   {
     id: 'songshan-ciyou',
@@ -166,5 +199,125 @@ export const placeProfiles: PlaceProfile[] = [
       },
     ],
     lastReviewed: reviewed, editorialReviewStatus: 'internal-reviewed',
+  },
+  {
+    id: 'bangka-qingshan',
+    organizationId: 'org-21-1bs6r0m',
+    organizationName: '艋舺青山宮',
+    district: '萬華區', address: '貴陽街2段218號',
+    introduction: {
+      zh: '艋舺青山宮位於萬華區貴陽街，內政部文化資產介紹將其列為市定古蹟。',
+      en: 'Bangka Qingshan Temple stands on Guiyang Street in Wanhua and is listed in the government heritage profile as a municipal historic monument.',
+    },
+    sources: [qingshanHeritage],
+    facts: [
+      {
+        id: 'building-and-rebuilding', title: { zh: '建廟與重建的不同年代', en: 'Building and rebuilding' },
+        description: {
+          zh: '文化資產介紹記錄1856年在現址建廟、1859年竣工，當時稱青山王館；1934至1938年間重建後改稱青山宮。',
+          en: 'The heritage account records building at this site from 1856 to 1859 as Qingshan Wangguan, followed by rebuilding from 1934 to 1938 and renaming as Qingshan Temple.',
+        },
+        sources: [qingshanHeritage],
+      },
+      {
+        id: 'courtyard-corridors', title: { zh: '殿宇之間的中庭', en: 'A courtyard between halls' },
+        description: {
+          zh: '來源介紹三川門與正殿以檐廊相接、圍繞中庭，並指出這些部分仍大致保持昭和年間改建的風格。',
+          en: 'The source describes corridors connecting the entrance and main halls around a courtyard, broadly retaining the style of the Shōwa-period rebuilding.',
+        },
+        sources: [qingshanHeritage],
+      },
+    ],
+    lastReviewed: coverageReviewed, editorialReviewStatus: 'internal-reviewed',
+  },
+  {
+    id: 'bangka-qingshui',
+    organizationId: 'org-294-ypjbe6',
+    organizationName: '財團法人艋舺清水巖祖師廟',
+    district: '萬華區', address: '康定路81號',
+    introduction: {
+      zh: '艋舺清水巖祖師廟位於康定路81號，政府文化資產介紹記錄其歷次營建與保存的清領時期建築特色。',
+      en: 'Bangka Qingshui Temple stands at 81 Kangding Road. Its government heritage profile documents its construction history and surviving Qing-period architectural features.',
+    },
+    sources: [qingshuiHeritage],
+    facts: [
+      {
+        id: 'construction-interval', title: { zh: '起造、落成與重建', en: 'Construction, completion and rebuilding' },
+        description: {
+          zh: '文化資產資料記錄1787年起造、1790年落成；廟宇受損後，於1867年完成重建。這些年代屬於不同建築階段。',
+          en: 'The heritage account records construction beginning in 1787, completion in 1790, and rebuilding completed in 1867 after damage. These dates describe distinct building stages.',
+        },
+        sources: [qingshuiHeritage],
+      },
+      {
+        id: 'hall-and-courtyard', title: { zh: '兩殿與廊道的格局', en: 'Halls and connecting corridors' },
+        description: {
+          zh: '來源將現存格局描述為兩殿、兩廊與兩側護龍；兩殿之間的廊道共同圍出中庭。',
+          en: 'The source describes two surviving halls, connecting corridors and side wings, with the corridors enclosing a courtyard between the halls.',
+        },
+        sources: [qingshuiHeritage],
+      },
+    ],
+    lastReviewed: coverageReviewed, editorialReviewStatus: 'internal-reviewed',
+  },
+  {
+    id: 'dadaocheng-xiahai',
+    organizationId: 'org-109-1vaoeq',
+    organizationName: '台北霞海城隍廟',
+    district: '大同區', address: '迪化街1段61號',
+    introduction: {
+      zh: '台北霞海城隍廟位於大稻埕迪化街一段61號，文化資產介紹記錄其遷建歷史與廟宇空間。',
+      en: 'Taipei Xia-Hai City God Temple is at 61 Dihua Street Section 1 in Dadaocheng. Its heritage profile documents relocation history and the temple’s spatial arrangement.',
+    },
+    sources: [xiahaiHeritage],
+    facts: [
+      {
+        id: 'relocation-and-building', title: { zh: '遷至大稻埕後的建廟', en: 'Building after relocation to Dadaocheng' },
+        description: {
+          zh: '政府介紹記錄1853年遷至大稻埕，1856年開始建廟，1859年完工；遷移與建築落成並非同一日期。',
+          en: 'The government account records relocation to Dadaocheng in 1853, construction beginning in 1856 and completion in 1859. Relocation and building completion are separate milestones.',
+        },
+        sources: [xiahaiHeritage],
+      },
+      {
+        id: 'hall-and-pavilion', title: { zh: '正殿與拜亭', en: 'Main hall and worship pavilion' },
+        description: {
+          zh: '文化資產介紹記錄廟宇由正殿與拜亭構成，拜亭正面門楣上方的廟名匾額帶有八仙刺繡裝飾。',
+          en: 'The heritage profile describes a main hall and worship pavilion, with an embroidered Eight Immortals decoration on the temple-name plaque above the pavilion’s front lintel.',
+        },
+        sources: [xiahaiHeritage],
+      },
+    ],
+    lastReviewed: coverageReviewed, editorialReviewStatus: 'internal-reviewed',
+  },
+  {
+    id: 'lee-chun-sheng-memorial',
+    organizationId: 'org-335-mdesof',
+    organizationName: '財團法人台北市李春生紀念基督長老教會',
+    district: '大同區', address: '貴德街44號',
+    introduction: {
+      zh: '長老教會官方名錄列出李春生紀念教會會址為貴德街44號，並列明與本資料集相同的財團法人名稱。',
+      en: 'The official Presbyterian directory gives Lee Chun-sheng Memorial Church’s address as 44 Guide Street and lists the same registered legal-entity name as this dataset.',
+    },
+    sources: [leeChurchDirectory],
+    facts: [
+      {
+        id: 'congregation-establishment', title: { zh: '堂會的設立日期', en: 'The congregation’s establishment' },
+        description: {
+          zh: '官方名錄將堂會設立日期記為1935年5月5日。這是堂會紀錄，不能用來推定所有建築構件或現代法人的成立年代。',
+          en: 'The official directory records the congregation’s establishment on 5 May 1935. This does not date every building element or establish the registration date of the modern legal entity.',
+        },
+        sources: [leeChurchDirectory],
+      },
+      {
+        id: 'former-post-office-site', title: { zh: '郵便電信支局與教會的場所歷史', en: 'A site with postal and church histories' },
+        description: {
+          zh: '政府文化資產介紹指出，教堂所在地曾為大稻埕郵便電信支局，見證公共建築轉作宗教場所的歷史。',
+          en: 'The government heritage profile identifies the church site as the former Dadaocheng post and telegraph office, documenting a change from public to religious use.',
+        },
+        sources: [leeChurchHeritage],
+      },
+    ],
+    lastReviewed: coverageReviewed, editorialReviewStatus: 'internal-reviewed',
   },
 ];
