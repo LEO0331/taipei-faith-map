@@ -321,6 +321,17 @@ export function App() {
       </nav>
 
       <main id="main-content" ref={mainRef} tabIndex={-1}>
+        {mode === 'map' && <section className="welcome-note" aria-label={language === 'zh' ? '從這裡開始' : 'Start here'}>
+          <p>{language === 'zh' ? '走進台北的信仰文化，慢慢探索，也可以只是停留片刻。' : "Discover Taipei’s faith and culture, explore at your own pace, or simply stay for a moment."}</p>
+          <div className="welcome-actions">
+            <button className="primary-button" disabled={!filteredOrganizations.length} onClick={event => {
+              const control = event.currentTarget;
+              control.focus();
+              if (filteredOrganizations[0]) openFaithSpace(filteredOrganizations[0], () => control.focus({ preventScroll: true }));
+            }}>{language === 'zh' ? '探索一處信仰空間' : 'Explore a Faith Space'}</button>
+            <a href="#faith-main-map" onClick={() => mapPanelRef.current?.focus()}>{language === 'zh' ? '自在瀏覽地圖' : 'Browse the map'}</a>
+          </div>
+        </section>}
         {dataLoadError ? <p className="status-text">{t.dataLoadError}</p> : null}
         {hasRelatedReturn && <div className="heritage-return-banner">
           <p>{relatedOrigin.current?.organization.name}</p>

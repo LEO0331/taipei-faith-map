@@ -4,7 +4,7 @@ import type { Language } from '../types';
 
 type ChallengeAction = 'quiet-garden' | 'quiet-note' | 'quiet-report';
 type Turnstile = {
-  render: (element: HTMLElement, options: { sitekey: string; action: ChallengeAction; callback: (token: string) => void; 'expired-callback': () => void; 'error-callback': () => void; theme: 'light' }) => string;
+  render: (element: HTMLElement, options: { sitekey: string; action: ChallengeAction; callback: (token: string) => void; 'expired-callback': () => void; 'error-callback': () => void; theme: 'light'; size: 'compact' }) => string;
   remove: (id: string) => void;
 };
 declare global { interface Window { turnstile?: Turnstile } }
@@ -45,7 +45,7 @@ export function GuestChallenge({ language, action, onToken, resetKey = 0, autoSt
       if (!active || !holder.current) return;
       provider = api;
       try {
-        widget = api.render(holder.current, { sitekey: siteKey, action, theme: 'light',
+        widget = api.render(holder.current, { sitekey: siteKey, action, theme: 'light', size: 'compact',
           callback: token => { if (active && typeof token === 'string' && token.length <= 4096) { report.current(token); setStatus('ready'); } },
           'expired-callback': () => { if (active) { report.current(undefined); setStatus('unavailable'); } },
           'error-callback': () => { if (active) { report.current(undefined); setStatus('unavailable'); } },

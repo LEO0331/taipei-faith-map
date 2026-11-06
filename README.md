@@ -4,6 +4,14 @@ Mobile-first bilingual web app for exploring Taipei registered religious organiz
 
 [繁體中文說明](README-zh.md)
 
+## V1.6 — Production readiness and effortless exploration
+
+The welcome offers a short path into a visible Faith Space or the ordinary map, without compulsory onboarding. Existing brief avatar actions, motion settings and immediate cultural reading remain available. Quiet Garden is an optional neutral space with no conversation requirement; opening it or passively reading approved notes does not create a guest or require a submission challenge.
+
+V1.5 source is merged, but the shared backend has **not** been remotely configured or verified in this implementation environment. Both public shared flags and database posting remain off. V1.6 prepares controlled verification, private moderation/retention operations and GitHub Pages/PWA fixes; it does not activate services or promise continuous availability. Complete the [public launch checklist](docs/public-launch-checklist.md) before activation.
+
+Use the [demo guide](docs/demo-guide.md) for a solo walkthrough when shared services are unavailable. See [architecture](docs/architecture.md), [V1.6 release evidence](docs/release-v1.6.md), [accessibility review](docs/accessibility-review.md) and the existing [Supabase setup](docs/supabase-integration.md), [moderation](docs/quiet-corner-moderation.md) and [health monitoring](docs/supabase-health-check.md) guides for implementation boundaries and remaining operator checks. Local tests are not proof of deployed Auth, two-browser Presence, live moderation or a scheduled retention run.
+
 ## Purpose
 
 This project provides a public map and lightweight dashboard for the "Taipei City Registered Religious Organizations Location Data" dataset. It is designed for browsing registered organization locations, filtering by district or religion type, checking festival-date text when available, and finding nearby registered organizations with browser geolocation.
@@ -129,29 +137,14 @@ npm run build
 
 ## Deploy
 
-### Vercel
+GitHub Pages is the frontend host. The existing workflow builds with `GITHUB_PAGES=true`, selecting `/taipei-faith-map/` as the Vite base, and explicitly leaves both shared-service flags false. Publish only the generated `dist` artifact. For a local repository-subpath build:
 
-Use the default Vite settings:
-
-- Build command: `npm run build`
-- Output directory: `dist`
-
-### Netlify
-
-Use:
-
-- Build command: `npm run build`
-- Publish directory: `dist`
-
-### GitHub Pages
-
-Build locally or in GitHub Actions:
-
-```bash
+```powershell
+$env:GITHUB_PAGES = 'true'
 npm run build
 ```
 
-Publish the `dist` directory. If deploying under a repository subpath, set the Vite `base` option before building.
+Manifest, icons, app scope and static/lazy asset paths must resolve under that base. Verify deployment refresh/update and offline behavior using the [launch checklist](docs/public-launch-checklist.md); do not assume all lazy views or map tiles are available offline. Supabase health monitoring is an independent workflow and does not deploy the site or run privileged maintenance.
 
 ## Data Disclaimer
 
