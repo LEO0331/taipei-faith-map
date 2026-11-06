@@ -10,7 +10,9 @@
     "test": "vitest run",
     "content:audit": "tsx scripts/auditCuratedContent.ts",
     "content:links": "tsx scripts/auditSourceLinks.ts",
-    "convert:data": "tsx scripts/convertReligiousOrganizations.ts"
+    "convert:data": "tsx scripts/convertReligiousOrganizations.ts",
+    "test:browser": "node scripts/browserVerification.mjs",
+    "test:browser:passive": "node scripts/browserPassiveVerification.mjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.119.0",
@@ -22,6 +24,7 @@
     "react-leaflet": "latest"
   },
   "devDependencies": {
+    "@playwright/test": "1.65.0",
     "@testing-library/react": "^16.3.3",
     "@types/leaflet": "latest",
     "@types/leaflet.markercluster": "latest",

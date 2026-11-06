@@ -37,3 +37,13 @@ If posting is paused or no authorized test backend exists, demonstrate reading/c
 共享服務未設定或旗標關閉時，直接展示地圖、信仰片刻、行事曆、路線與歷史即可。不要為展示開啟未驗證的公開服務。庭院需自行加入，閱讀已審核留言不應註冊訪客或要求驗證；如無其他人，呈現真實的空庭院／空留言板。投稿只在獲授權、具備審核與安全控制的測試環境進行，成功送出仍為待審，不能宣稱即時公開。
 
 For operational prerequisites and evidence recording, use the [launch checklist](public-launch-checklist.md), [release record](release-v1.6.md) and [accessibility review](accessibility-review.md).
+
+## Current V2.0 demonstration boundary
+
+The actual public Pages site and the solo walkthrough have now been exercised in a real browser. Controlled builds passed the desktop/tablet/mobile bilingual journeys and passive hosted-note reading; details are in [V2.0 evidence](release-v2.0.md). The public shared entry remains disabled. Turnstile is configured, but real challenges failed in the tested automated Chromium/Chrome sessions, including owner manual attempts. Do not present a working live garden or successful submission from those results, add demo peers, or enable flags for a demonstration shortcut. Use the complete solo walkthrough while positive guest/two-browser tests and operator launch approval remain outstanding.
+
+## Final integration recovery / 最終整合復測
+
+The existing Playwright suite's current failures must be classified by layer: managed kernel initialization, actual browser availability, real challenge verification, Auth, Realtime and note publication. A successful static browser does not imply a valid CAPTCHA or authenticated peer. The final integration record contains the recovered browser versions, redacted results and blocked paths. To reproduce a blocked real challenge, use an authorized ordinary-browser controlled environment with the real widget; inspect Cloudflare analytics/allowed hostnames and record the provider's outcome without sharing tokens. Do not switch to dummy keys or enable the public flags to work around a provider rejection.
+
+For the two-browser recheck, use independent sessions, complete each genuine challenge, join each explicitly, observe one actual peer in each, then wave/sit/acknowledge, leave, background and reconnect while inspecting neutral payload field names. Record observed results and cleanup privately. After that succeeds, arrange a specifically authorized controlled posting window and operator coverage for the pending→approve→read→report→hide/delete flow; restore the original posting state and remove only test content. Public activation remains a separate reviewed PR and owner decision.

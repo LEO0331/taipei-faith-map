@@ -4,11 +4,27 @@
 
 [English README](README.md)
 
+## V2.0 整合狀態
+
+專用後端、受保護函式、清理工作與健康工作流程已有遠端驗證紀錄。本輪將既有 GitHub Variables 接入 Pages 建置，補上共享功能啟用時的設定防線與可重現 Playwright 測試。靜態網站、指定手機寬度、雙語、鍵盤、PWA 與被動閱讀留言已通過真實瀏覽器檢查；真實 Turnstile 在受測自動化瀏覽器及手動嘗試後仍未回傳 token，因此正向訪客／雙人同步／投稿測試仍受阻。公開共享旗標與投稿保持關閉，未準備未達門檻的啟用 PR。詳見[目前證據](docs/release-v2.0.md)與[上線狀態](docs/public-launch-checklist.md)。
+
+`npm ci` 後，可用下列 PowerShell 指令重現靜態真實瀏覽器測試：
+
+```powershell
+$env:PLAYWRIGHT_BROWSERS_PATH = "$PWD/.supabase-test/pw-browsers"
+npx playwright install chromium
+$env:GITHUB_PAGES = 'true'
+npm run build
+npm run test:browser
+```
+
+Playwright 僅為釘選版本的開發相依。測試使用暫時的本機靜態伺服器、啟用沙箱的獨立瀏覽器環境與被 Git 忽略的結果目錄，不會註冊訪客或解 CAPTCHA。`test:browser:passive` 另需已設定的私人測試建置與真實後端唯讀權限；請依[整合指南](docs/supabase-integration.md)操作。
+
 ## V1.6 — 正式環境準備與輕鬆探索
 
 首頁提供精簡說明，可直接探索目前可見的信仰空間，或繼續瀏覽地圖，不需強制導覽。既有短暫角色動作、動畫偏好與即時文化資訊仍可使用。靜心庭院是可選的中性空間，不要求交談；只開啟庭院或閱讀已審核留言，不會建立訪客或要求投稿驗證。
 
-V1.5程式已合併，但本次實作環境**尚未設定或驗證遠端共享後端**。公開的Presence／Corner旗標及資料庫投稿開關維持關閉。V1.6備妥受控驗證、私人審核／保存期限操作與GitHub Pages／PWA修正，不代表已啟用服務或保證持續可用。啟用前請逐項完成[公開上線檢查表](docs/public-launch-checklist.md)。
+V1.6交付當時**尚未設定或驗證遠端共享後端**；後續V2.0遠端證據見上方紀錄。公開的Presence／Corner旗標及資料庫投稿開關維持關閉。V1.6備妥受控驗證、私人審核／保存期限操作與GitHub Pages／PWA修正，不代表已啟用服務或保證持續可用。啟用前請逐項完成[公開上線檢查表](docs/public-launch-checklist.md)。
 
 共享服務不可用時，可依[展示指南](docs/demo-guide.md)展示完整的單人探索。詳見[系統架構](docs/architecture.md)、[V1.6實測紀錄](docs/release-v1.6.md)、[無障礙檢查](docs/accessibility-review.md)，以及既有的[Supabase設定](docs/supabase-integration.md)、[留言審核](docs/quiet-corner-moderation.md)及[健康檢查](docs/supabase-health-check.md)。本機測試不等於已驗證遠端Auth、雙瀏覽器Presence、公開審核或保存期限排程。
 
