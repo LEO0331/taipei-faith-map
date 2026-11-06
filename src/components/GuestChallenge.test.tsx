@@ -30,6 +30,7 @@ describe('optional guest verification', () => {
     await waitFor(() => expect(renderWidget).toHaveBeenCalledOnce());
     const options = renderWidget.mock.calls[0][1];
     expect(options.action).toBe('quiet-note');
+    expect(options.size).toBe('compact');
     act(() => options.callback('verified-token'));
     expect(onToken).toHaveBeenLastCalledWith('verified-token');
     expect(screen.getByText('Verification complete.')).toBeTruthy();

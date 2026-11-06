@@ -74,6 +74,16 @@ a {
   padding: max(1rem, env(safe-area-inset-top)) 1rem 1rem;
 }
 .header-optional-actions { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.garden-loading { position: fixed; inset: 0; z-index: 2200; display: grid; place-items: center; padding: 24px; overflow: auto; background: #f5f2e8; color: #322b25; }
+.garden-loading > div { max-width: 32rem; line-height: 1.8; }
+.garden-loading button { min-height: 44px; }
+.garden-loading :focus-visible { outline: 3px solid #0f766e; outline-offset: 4px; }
+.welcome-note { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px 24px; padding: 18px; background: #eef3ed; border: 1px solid #cddccc; border-radius: 10px; margin-bottom: 16px; }
+.welcome-note p { flex: 1 1 300px; margin: 0; color: #334c43; line-height: 1.8; max-width: 50rem; }
+.welcome-actions { display: flex; align-items: center; flex-wrap: wrap; gap: 12px 20px; }
+.welcome-actions > * { min-height: 44px; display: inline-flex; align-items: center; justify-content: center; text-align: center; }
+.welcome-actions :focus-visible { outline: 3px solid #0f766e; outline-offset: 4px; }
+@media (max-width: 480px) { .welcome-note { padding: 14px; } .welcome-actions { width: 100%; } .welcome-actions > * { flex: 1 1 100%; } .header-optional-actions { max-width: 100%; } }
 
 .app-header h1 {
   font-size: clamp(1.65rem, 7vw, 3rem);

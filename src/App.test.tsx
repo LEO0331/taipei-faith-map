@@ -59,6 +59,38 @@ describe('optional garden entry', () => {
   });
 });
 
+describe('first-minute exploration', () => {
+  it('opens an existing filtered result directly and returns to the welcome action', async () => {
+    render(<App />);
+    await screen.findByRole('heading', { name: organization.name });
+    fireEvent.change(screen.getByRole('searchbox'), { target: { value: '另一處' } });
+    const opener = screen.getByRole('button', { name: '探索一處信仰空間' });
+    fireEvent.click(opener);
+    const dialog = await screen.findByRole('dialog', { name: '另一處' });
+    expect(within(dialog).getByText(organization.address)).toBeTruthy();
+    fireEvent.keyDown(dialog, { key: 'Escape' });
+    await waitFor(() => expect(document.activeElement).toBe(opener));
+    expect((screen.getByRole('searchbox') as HTMLInputElement).value).toBe('另一處');
+    expect(lifecycle).toEqual({ mounted: 1, unmounted: 0 });
+    fireEvent.change(screen.getByRole('searchbox'), { target: { value: 'no matching place' } });
+    expect(opener.hasAttribute('disabled')).toBe(true);
+  });
+
+  it('welcomes visitors in both languages without a tutorial or social request', async () => {
+    render(<App />);
+    await screen.findByRole('heading', { name: organization.name });
+    expect(screen.getByRole('region', { name: '從這裡開始' })).toBeTruthy();
+    expect(screen.queryByRole('dialog')).toBeNull();
+    fireEvent.click(screen.getByRole('button', { name: 'English' }));
+    expect(screen.getByText('Discover Taipei’s faith and culture, explore at your own pace, or simply stay for a moment.')).toBeTruthy();
+    const mapLink = screen.getByRole('link', { name: 'Browse the map' });
+    expect(mapLink.getAttribute('href')).toBe('#faith-main-map');
+    fireEvent.click(mapLink);
+    expect(document.activeElement?.id).toBe('faith-main-map');
+    expect(vi.mocked(fetch).mock.calls.every(([url]) => String(url).includes('data/religious-organizations.json'))).toBe(true);
+  });
+});
+
 describe('Faith Spaces map integration', () => {
   it('opens from the list, restores invoking focus, and retains mounted map and filters', async () => {
     const { container } = render(<App />);

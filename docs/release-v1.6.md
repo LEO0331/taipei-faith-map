@@ -35,3 +35,19 @@ A new browser inspection attempt through the installed computer-use runtime fail
 The isolated Git snapshot passed clean `npm ci`, **437 tests / 53 files**, TypeScript, the Pages production build and actual built-output checking (**16 modules / 96 scoped references**, including lazy stylesheets). The content structural audit passed; the only change after the full suite's prior content check was the build checker and its missing-lazy-CSS regression. Phase-A main bundle: **548.52 kB / gzip 170.66 kB**; optional SDK unchanged. Both actual missing-configuration CLI invocations exited **1** safely, and the shared Edge handler/validation passed a standalone TypeScript check.
 
 The SQL assertions and readiness audit above were repeated on the isolated PostgreSQL fixture. Docker was rechecked and its Linux-engine named pipe was absent, so no full local Supabase stack ran. These local checks do not establish a deployed or scheduled service.
+
+## Effortless experience follow-up
+
+The short bilingual welcome introduces self-paced exploration and offers direct Faith Space and map entry without a tutorial. The scene opens a current filtered result and restores its welcome control on close; filter/map context remains intact. Faith Moments actions use a two-column narrow-screen layout while preserving motion controls and immediate information.
+
+Quiet Garden explains its neutral, optional companionship in visitor language. Opening the dialog or reading approved notes starts no CAPTCHA, guest registration or Realtime join. Explicit Enter first reuses a verified guest where available; only a new guest needs its challenge. Composer/report verification remains action-specific, with drafts preserved across the separate Auth challenge. The compact widget fits narrow nested forms without weakening server verification. Loading has a bounded ten-second message and an immediate keyboard return. Note list semantics and hidden/disclosure focus eligibility were corrected after automated audits.
+
+Bilingual demo steps and solo fallback are in [demo-guide.md](demo-guide.md). The new structural accessibility evidence and unverified manual matrix are recorded in [accessibility-review.md](accessibility-review.md).
+
+## Final validation
+
+The integrated implementation passed **448 tests across 54 files**, TypeScript and a `GITHUB_PAGES=true` production build. The built-output checker inspected 16 JavaScript modules and 96 scoped asset references. Eight bilingual Quiet Garden/Corner axe states passed under enabled structural rules; contrast is not tested by JSDOM. Existing 33 mocked Edge tests and 32 mocked health tests continue to pass; readiness adds 19 tests and PWA/build checking adds 37. These are offline tests, not successful remote service calls.
+
+Latest Pages bundle: main **549.38 kB / gzip 170.97 kB**, versus baseline **548.41 / 170.63**; optional SDK unchanged at **216.01 / 55.68**. No new runtime dependency was added, and the SDK remains optional/lazy. The existing main-chunk size advisory remains.
+
+Main changed areas: App/welcome and styles; GuestChallenge; Faith Moments action CSS; garden transport presentation/dialog/loading; note card semantics/report layout; service request bounds; PWA/manifest/registration; build/readiness scripts; operator SQL and existing setup/moderation/health guides; bilingual README and demo/accessibility/architecture/launch/release documentation. Public feature flags, server posting default and privileged secret boundaries remain unchanged.

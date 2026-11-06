@@ -3,6 +3,7 @@ import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-libra
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import QuietGarden from '../QuietGarden';
 import { joinQuietGarden } from '../presenceClient';
+import { QuietVerificationRequiredError } from '../../../services/supabaseClient';
 
 vi.mock('../presenceClient', () => ({ joinQuietGarden: vi.fn() }));
 const key = 'c6244e7a-c5bc-4f8b-b3d4-7ebc2738a7c1';
@@ -11,6 +12,28 @@ beforeEach(() => { vi.clearAllMocks(); vi.mocked(joinQuietGarden).mockResolvedVa
 afterEach(() => { cleanup(); vi.useRealTimers(); vi.restoreAllMocks(); });
 
 describe('optional quiet garden', () => {
+  it('mounts verification only after explicit entry requires a new guest, then joins with the proof', async () => {
+    vi.mocked(joinQuietGarden).mockRejectedValueOnce(new QuietVerificationRequiredError());
+    const props = { language: 'en' as const, enabled: true, onClose: vi.fn(), challenge: <p>Guest challenge</p> };
+    const { rerender } = render(<QuietGarden {...props} />);
+    expect(screen.queryByText('Guest challenge')).toBeNull();
+    fireEvent.click(screen.getByRole('button', { name: 'Enter Quiet Garden' }));
+    await screen.findByText('Please verify guest access before entering.');
+    expect(screen.getByText('Guest challenge')).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Enter Quiet Garden' }).hasAttribute('disabled')).toBe(true);
+    rerender(<QuietGarden {...props} captchaToken="fresh-proof" />);
+    fireEvent.click(screen.getByRole('button', { name: 'Enter Quiet Garden' }));
+    await screen.findByRole('button', { name: 'Leave shared garden' });
+    expect(vi.mocked(joinQuietGarden).mock.calls[1][0].captchaToken).toBe('fresh-proof');
+    expect(screen.queryByText('Guest challenge')).toBeNull();
+  });
+
+  it('reuses a valid guest without showing another challenge', async () => {
+    render(<QuietGarden language="en" enabled onClose={vi.fn()} challenge={<p>Unneeded challenge</p>} />);
+    fireEvent.click(screen.getByRole('button', { name: 'Enter Quiet Garden' }));
+    await screen.findByRole('button', { name: 'Leave shared garden' });
+    expect(screen.queryByText('Unneeded challenge')).toBeNull();
+  });
   it('does not connect, authenticate or fabricate peers before explicit opt-in', () => {
     const { container } = render(<QuietGarden language="en" enabled onClose={vi.fn()} />);
     expect(joinQuietGarden).not.toHaveBeenCalled();

@@ -4,6 +4,7 @@ import type { Language } from '../../types';
 import { joinQuietGarden } from './presenceClient';
 import type { GardenConnection } from './presenceClient';
 import type { GardenGesture, PresenceState } from './presenceTypes';
+import { QuietVerificationRequiredError } from '../../services/supabaseClient';
 import './quiet-presence.css';
 
 const labels = {
@@ -13,7 +14,7 @@ const labels = {
 
 export default function QuietGarden({ language, onClose, enabled = false, captchaToken, onCaptchaConsumed, challenge, notesSlot, motionEnabled = true }: { language: Language; onClose: () => void; enabled?: boolean; captchaToken?: string; onCaptchaConsumed?: () => void; challenge?: ReactNode; notesSlot?: ReactNode; motionEnabled?: boolean }) {
   const t = labels[language];
-  const [status, setStatus] = useState<'idle' | 'joining' | 'connected' | 'reconnecting' | 'paused' | 'unavailable'>('idle');
+  const [status, setStatus] = useState<'idle' | 'verification' | 'joining' | 'connected' | 'reconnecting' | 'paused' | 'unavailable'>('idle');
   const [peers, setPeers] = useState<PresenceState[]>([]);
   const [ownGesture, setOwnGesture] = useState<GardenGesture>('idle');
   const [greeting, setGreeting] = useState(false);
@@ -58,7 +59,14 @@ export default function QuietGarden({ language, onClose, enabled = false, captch
       if (active !== generation.current) { await joined.leave(); return; }
       clearTimeout(deadline); timers.current.delete(deadline);
       connection.current = joined; setStatus('connected');
-    } catch { clearTimeout(deadline); timers.current.delete(deadline); if (active === generation.current) { controller.current = undefined; setStatus('unavailable'); setPeers([]); } }
+    } catch (error) {
+      clearTimeout(deadline); timers.current.delete(deadline);
+      if (active === generation.current) {
+        controller.current = undefined;
+        setStatus(error instanceof QuietVerificationRequiredError ? 'verification' : 'unavailable');
+        setPeers([]);
+      }
+    }
   };
   const perform = async (gesture: GardenGesture) => {
     if (status !== 'connected') return;
@@ -85,7 +93,7 @@ export default function QuietGarden({ language, onClose, enabled = false, captch
     {status === 'connected' || status === 'reconnecting' ? <>
       {status === 'connected' ? <><p>{t.others}: {peers.length}</p>{peers.length === 0 && <p>{t.empty}</p>}</> : <p>{t.reconnecting}</p>}
       <div className="quiet-garden-actions"><button aria-disabled={status !== 'connected'} onClick={() => void perform('sit')}>{t.sit}</button><button aria-disabled={status !== 'connected'} onClick={() => void perform('wave')}>{t.wave}</button><button aria-disabled={status !== 'connected'} onClick={() => void perform('idle')}>{t.idle}</button>{greeting && <button aria-disabled={status !== 'connected'} onClick={() => void perform('wave')}>{t.acknowledge}</button>}<button onClick={() => { leave(); setStatus('idle'); }}>{t.leave}</button></div>
-    </> : <>{enabled ? <>{challenge}<button className="primary-button" disabled={status === 'joining'} onClick={() => void enter()}>{t.enter}</button></> : <p>{t.disabled}</p>}</>}
+    </> : <>{enabled ? <>{status === 'verification' && <div className="garden-verification"><p role="status">{language === 'zh' ? '進入前，請先完成訪客驗證。' : 'Please verify guest access before entering.'}</p>{challenge}</div>}<button className="primary-button" disabled={status === 'joining' || (status === 'verification' && !captchaToken)} onClick={() => void enter()}>{t.enter}</button></> : <p>{t.disabled}</p>}</>}
     {status === 'unavailable' && <p>{t.unavailable}</p>}{status === 'paused' && <p>{t.pause}</p>}
     {notesSlot}<button className="text-button" onClick={() => { leave(); onClose(); }}>{t.close}</button>
   </section>;

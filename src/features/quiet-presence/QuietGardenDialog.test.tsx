@@ -19,6 +19,19 @@ beforeEach(() => {
 afterEach(() => { cleanup(); document.body.style.overflow = ''; });
 
 describe('quiet garden dialog shell', () => {
+  it('ignores controls hidden by ancestors or closed details when wrapping focus', () => {
+    render(<QuietGardenDialog language="en" onLanguageChange={vi.fn()} onClose={vi.fn()} />);
+    const dialog = screen.getByRole('dialog');
+    const close = screen.getByRole('button', { name: 'Return to exploration' });
+    const tail = document.createElement('div');
+    tail.innerHTML = '<button id="last-visible">Last visible</button><div style="display:none"><button>Hidden by ancestor</button></div><div style="visibility:hidden"><button>Invisible</button></div><details><button>Closed details control</button></details><div inert><button>Inert control</button></div>';
+    dialog.append(tail);
+    close.focus();
+    fireEvent.keyDown(close, { key: 'Tab', shiftKey: true });
+    expect(document.activeElement).toBe(tail.querySelector('#last-visible'));
+    fireEvent.keyDown(document.activeElement!, { key: 'Tab' });
+    expect(document.activeElement).toBe(close);
+  });
   it('offers the board independently while Presence is disabled', () => {
     vi.mocked(getFeatureFlags).mockReturnValue({ faithMoments: true, quietPresence: false, quietCorner: true });
     render(<QuietGardenDialog language="en" onLanguageChange={vi.fn()} onClose={vi.fn()} />);
