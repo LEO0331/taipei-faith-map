@@ -5,12 +5,17 @@ import { GuestChallenge } from '../../components/GuestChallenge';
 import { getFeatureFlags } from '../../utils/featureFlags';
 import { useVisitorMotion } from '../faith-moments/useVisitorMotion';
 import QuietGarden from './QuietGarden';
+import QuietCorner from '../quiet-corner/QuietCorner';
 import './quiet-presence.css';
 
 export default function QuietGardenDialog({ language, onLanguageChange, onClose }: { language: Language; onLanguageChange: (language: Language) => void; onClose: () => void }) {
   const flags = getFeatureFlags();
   const [captchaToken, setCaptchaToken] = useState<string>();
   const [challengeReset, setChallengeReset] = useState(0);
+  const [cornerOpen, setCornerOpen] = useState(false);
+  const [noteToken, setNoteToken] = useState<string>();
+  const [noteReset, setNoteReset] = useState(0);
+  const cornerInvoker = useRef<HTMLButtonElement>(null);
   const visitor = useVisitorMotion();
   const dialog = useRef<HTMLDivElement>(null), close = useRef<HTMLButtonElement>(null);
   const heading = useId();
@@ -32,6 +37,10 @@ export default function QuietGardenDialog({ language, onLanguageChange, onClose 
     <p className="garden-service-notice">{zh ? '共享功能需匿名服務工作階段，無需填寫帳號。這個中性庭院不分享你正在探索的教別或場所。' : 'Shared features use an anonymous service session without an account form. This neutral garden never shares the religion or place you are exploring.'}</p>
     <div className="garden-motion-control"><button className="text-button" aria-pressed={visitor.motionEnabled} onClick={() => visitor.setMotionEnabled(!visitor.motionEnabled)}>{zh ? visitor.motionEnabled ? '動畫：開啟' : '動畫：關閉' : visitor.motionEnabled ? 'Animation: On' : 'Animation: Off'}</button></div>
     <QuietGarden language={language} onClose={onClose} enabled={flags.quietPresence} motionEnabled={visitor.motionEnabled} captchaToken={captchaToken}
+      notesSlot={flags.quietCorner && (cornerOpen ? <QuietCorner language={language} onClose={() => { setCornerOpen(false); setNoteToken(undefined); requestAnimationFrame(() => cornerInvoker.current?.focus()); }} captchaToken={noteToken}
+        onResetCaptcha={() => { setNoteToken(undefined); setNoteReset(value => value + 1); }}
+        challenge={action => <GuestChallenge key={action} language={language} action={action} onToken={setNoteToken} resetKey={noteReset} autoStart />} />
+        : <button className="text-button" ref={cornerInvoker} onClick={() => setCornerOpen(true)}>{zh ? '開啟留言角落' : 'Open Quiet Corner'}</button>)}
       onCaptchaConsumed={() => { setCaptchaToken(undefined); setChallengeReset(value => value + 1); }}
       challenge={<GuestChallenge language={language} action="quiet-garden" onToken={setCaptchaToken} resetKey={challengeReset} autoStart />} />
   </div></div>;

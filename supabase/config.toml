@@ -1,0 +1,7 @@
+project_id = "taipei-faith-map-local"
+
+[functions.submit-quiet-note]
+verify_jwt = true
+
+[functions.report-quiet-note]
+verify_jwt = true

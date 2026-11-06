@@ -311,7 +311,7 @@ export function App() {
           <p>{t.appSubtitle}</p>
         </div>
         <div className="header-optional-actions">
-          {flags.quietPresence && <button className="text-button" onClick={event => { event.currentTarget.focus(); gardenInvoker.current = event.currentTarget; setGardenOpen(true); }}>{language === 'zh' ? '靜心庭院' : 'Quiet Garden'}</button>}
+          {(flags.quietPresence || flags.quietCorner) && <button className="text-button" onClick={event => { event.currentTarget.focus(); gardenInvoker.current = event.currentTarget; setGardenOpen(true); }}>{language === 'zh' ? '靜心庭院' : 'Quiet Garden'}</button>}
           <LanguageToggle language={language} onChange={handleLanguageChange} />
         </div>
       </header>
