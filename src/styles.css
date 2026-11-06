@@ -73,6 +73,7 @@ a {
   justify-content: space-between;
   padding: max(1rem, env(safe-area-inset-top)) 1rem 1rem;
 }
+.header-optional-actions { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
 
 .app-header h1 {
   font-size: clamp(1.65rem, 7vw, 3rem);

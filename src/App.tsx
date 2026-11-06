@@ -22,12 +22,15 @@ import { getPublicAssetPath } from './utils/assets';
 import { calculateDistanceMeters } from './utils/geo';
 import { buildSummary, filterOrganizations } from './utils/data';
 import { getStoredLanguage, translations } from './utils/i18n';
+import { getFeatureFlags } from './utils/featureFlags';
+import { QuietGardenBoundary, QuietGardenStatus } from './features/quiet-presence/QuietGardenLoader';
 
 const radiusOptions = [500, 1000, 2000, 5000];
 const FaithSpaceModal = lazy(() => import('./features/faith-spaces/FaithSpaceModal'));
 const ReligiousCalendar = lazy(() => import('./features/religious-calendar/ReligiousCalendar'));
 const CulturalRoutes = lazy(() => import('./features/cultural-routes/CulturalRoutesPanel'));
 const HeritageExplorer = lazy(() => import('./features/heritage/HeritageExplorer'));
+const QuietGardenDialog = lazy(() => import('./features/quiet-presence/QuietGardenDialog'));
 type ExplorationMode = 'map' | 'calendar' | 'routes' | 'heritage';
 type HeritageReturnContext = { control: HTMLElement | null; kind: 'map' | 'route'; controlKey: string; previousRoute?: ResolvedCulturalRoute; previousStopId?: string };
 type RelatedReturnContext = { organization: ReligiousOrganization; mode: ExplorationMode; route?: ResolvedCulturalRoute; stopId?: string; focus?: MapFocusRequest; heritage?: HeritageReturnContext; restoreFocus?: () => void; invokerAction: 'explore' | 'profile' };
@@ -46,6 +49,13 @@ export function App() {
   const [nearbyError, setNearbyError] = useState<string>();
   const [dataLoadError, setDataLoadError] = useState(false);
   const [selectedOrganization, setSelectedOrganization] = useState<ReligiousOrganization>();
+  const [gardenOpen, setGardenOpen] = useState(false);
+  const gardenInvoker = useRef<HTMLElement | null>(null);
+  const flags = getFeatureFlags();
+  const closeGarden = useCallback(() => {
+    setGardenOpen(false);
+    requestAnimationFrame(() => gardenInvoker.current?.focus());
+  }, []);
   const [faithSpacePanel, setFaithSpacePanel] = useState<'scene' | 'place'>('scene');
   const [relatedSelection, setRelatedSelection] = useState<RelatedSelectionRequest>();
   const [hasRelatedReturn, setHasRelatedReturn] = useState(false);
@@ -292,7 +302,7 @@ export function App() {
 
   return (
     <>
-    <div className="app" inert={selectedOrganization ? true : undefined}>
+    <div className="app" inert={selectedOrganization || gardenOpen ? true : undefined}>
       <a className="skip-link" href="#main-content">{language === 'zh' ? '跳至主要內容' : 'Skip to main content'}</a>
       <header className="app-header">
         <div>
@@ -300,7 +310,10 @@ export function App() {
           <h1>{t.appTitle}</h1>
           <p>{t.appSubtitle}</p>
         </div>
-        <LanguageToggle language={language} onChange={handleLanguageChange} />
+        <div className="header-optional-actions">
+          {flags.quietPresence && <button className="text-button" onClick={event => { event.currentTarget.focus(); gardenInvoker.current = event.currentTarget; setGardenOpen(true); }}>{language === 'zh' ? '靜心庭院' : 'Quiet Garden'}</button>}
+          <LanguageToggle language={language} onChange={handleLanguageChange} />
+        </div>
       </header>
 
       <nav className="discovery-navigation" aria-label={discovery.navigation}>
@@ -401,6 +414,9 @@ export function App() {
 
       <Footer language={language} />
     </div>
+    {gardenOpen && <QuietGardenBoundary language={language} onClose={closeGarden}><Suspense fallback={<QuietGardenStatus language={language} onClose={closeGarden} />}>
+      <QuietGardenDialog language={language} onLanguageChange={handleLanguageChange} onClose={closeGarden} />
+    </Suspense></QuietGardenBoundary>}
     {selectedOrganization && <FaithSpaceBoundary language={language} onClose={closeFaithSpace}><Suspense fallback={<FaithSpaceStatus language={language} onClose={closeFaithSpace} />}>
       <FaithSpaceModal organization={selectedOrganization} language={language} onLanguageChange={handleLanguageChange} onClose={closeFaithSpace} initialPanel={faithSpacePanel}
         organizations={organizations} onNavigateRelated={hasRelatedReturn ? undefined : openRelatedContent} />

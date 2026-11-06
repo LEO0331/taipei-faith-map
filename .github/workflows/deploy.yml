@@ -37,6 +37,8 @@ jobs:
         run: npm run build
         env:
           GITHUB_PAGES: 'true'
+          VITE_QUIET_PRESENCE_ENABLED: 'false'
+          VITE_QUIET_CORNER_ENABLED: 'false'
 
       - name: Setup Pages
         uses: actions/configure-pages@v5

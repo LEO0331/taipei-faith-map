@@ -29,7 +29,34 @@ beforeEach(() => {
   vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ ok: true, json: async () => [organization, { ...organization, id: 'second', name: '另一處', district: '信義區', religion: '佛教', festivalDates: [] }] }));
   vi.stubGlobal('requestAnimationFrame', (callback: FrameRequestCallback) => window.setTimeout(() => callback(0), 0));
 });
-afterEach(() => { cleanup(); vi.unstubAllGlobals(); });
+afterEach(() => { cleanup(); vi.unstubAllGlobals(); vi.unstubAllEnvs(); });
+
+describe('optional garden entry', () => {
+  it('keeps the entry absent with default flags', async () => {
+    vi.stubEnv('VITE_QUIET_PRESENCE_ENABLED', 'false');
+    render(<App />);
+    await screen.findByRole('heading', { name: organization.name });
+    expect(screen.queryByRole('button', { name: '靜心庭院' })).toBeNull();
+  });
+
+  it('preserves the map and filter and restores the invoking control on close', async () => {
+    vi.stubEnv('VITE_QUIET_PRESENCE_ENABLED', 'true');
+    const { container } = render(<App />);
+    await screen.findByRole('heading', { name: organization.name });
+    fireEvent.change(screen.getByRole('searchbox'), { target: { value: organization.name } });
+    const map = screen.getByTestId('persistent-map');
+    const opener = screen.getByRole('button', { name: '靜心庭院' });
+    fireEvent.click(opener);
+    const dialog = await screen.findByRole('dialog', { name: '靜心庭院' });
+    expect(container.querySelector('.app')?.hasAttribute('inert')).toBe(true);
+    fireEvent.keyDown(dialog, { key: 'Escape' });
+    await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull());
+    await waitFor(() => expect(document.activeElement).toBe(opener));
+    expect(screen.getByTestId('persistent-map')).toBe(map);
+    expect((screen.getByRole('searchbox') as HTMLInputElement).value).toBe(organization.name);
+    expect(lifecycle).toEqual({ mounted: 1, unmounted: 0 });
+  });
+});
 
 describe('Faith Spaces map integration', () => {
   it('opens from the list, restores invoking focus, and retains mounted map and filters', async () => {
