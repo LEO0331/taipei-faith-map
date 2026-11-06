@@ -10,6 +10,10 @@ import { PlaceProfilePanel } from './PlaceProfilePanel';
 import { TraditionIntroduction } from './TraditionIntroduction';
 import './faith-spaces.css';
 import type { RelatedCulturalTarget } from '../../components/relatedContentTypes';
+import { getFeatureFlags } from '../../utils/featureFlags';
+import { useVisitorMotion } from '../faith-moments/useVisitorMotion';
+import { VisitorAvatar } from '../faith-moments/VisitorAvatar';
+import { AvatarActions } from '../faith-moments/AvatarActions';
 
 type Props = {
   organization: ReligiousOrganization;
@@ -61,6 +65,8 @@ const labels = {
 
 export default function FaithSpaceModal({ organization, language, onLanguageChange, onClose, initialPanel = 'scene', organizations, onNavigateRelated }: Props) {
   const config = getFaithSpaceConfig(organization.religion);
+  const visitor = useVisitorMotion();
+  const momentsEnabled = getFeatureFlags().faithMoments;
   const [selectedId, setSelectedId] = useState(config.hotspots[0].id);
   const [expanded, setExpanded] = useState(true);
   const [panel, setPanel] = useState<'scene' | 'place'>(initialPanel);
@@ -87,9 +93,12 @@ export default function FaithSpaceModal({ organization, language, onLanguageChan
     setCompleted(false);
     setGuided(true);
     setPanel('scene');
+    if (momentsEnabled) visitor.walkTo(config.hotspots[0]);
   };
   const goTo = (index: number) => {
-    setSelectedId(config.hotspots[Math.max(0, Math.min(config.hotspots.length - 1, index))].id);
+    const hotspot = config.hotspots[Math.max(0, Math.min(config.hotspots.length - 1, index))];
+    setSelectedId(hotspot.id);
+    if (momentsEnabled) visitor.walkTo(hotspot);
     setExpanded(true);
     setCompleted(false);
   };
@@ -138,7 +147,11 @@ export default function FaithSpaceModal({ organization, language, onLanguageChan
         <p className="faith-disclaimer" id={descriptionId}>{t.disclaimer}</p>
         <nav className="faith-content-navigation" aria-label={t.navigation}>
           <button className="faith-button" aria-pressed={panel === 'scene'} aria-controls={contentPanelId} onClick={() => setPanel('scene')}>{t.scene}</button>
-          <button className="faith-button" aria-pressed={panel === 'place'} aria-controls={contentPanelId} onClick={() => setPanel('place')}>{t.place}</button>
+          <button className="faith-button" aria-pressed={panel === 'place'} aria-controls={contentPanelId} onClick={() => { visitor.skip(); setPanel('place'); }}>{t.place}</button>
+          {momentsEnabled && <div className="visitor-motion-buttons visitor-motion-compact" role="group" aria-label={language === 'zh' ? '動畫偏好' : 'Animation preference'}>
+            <button className="faith-button" aria-pressed={visitor.motionEnabled} onClick={() => visitor.setMotionEnabled(true)}>{language === 'zh' ? '開啟動畫' : 'Animation On'}</button>
+            <button className="faith-button" aria-pressed={!visitor.motionEnabled} onClick={() => visitor.setMotionEnabled(false)}>{language === 'zh' ? '關閉動畫' : 'Animation Off'}</button>
+          </div>}
         </nav>
         <div className={`faith-exhibition${guided && panel === 'scene' ? ' is-guided' : ''}`}>
           <section className="faith-art-panel" aria-label={config.title[language]}>
@@ -149,13 +162,14 @@ export default function FaithSpaceModal({ organization, language, onLanguageChan
             </div>
             <div className="faith-scene">
               <FaithSpaceIllustration scene={config.id} />
+              {momentsEnabled && <VisitorAvatar action={visitor.action} position={visitor.position} motionEnabled={visitor.motionEnabled} />}
               {config.hotspots.map((hotspot, index) => (
                 <button key={hotspot.id} className={`faith-hotspot${selected.id === hotspot.id ? ' is-selected' : ''}`}
                   style={{ left: `${hotspot.x}%`, top: `${hotspot.y}%` }}
                   aria-label={hotspot.title[language]} aria-pressed={selected.id === hotspot.id} aria-controls={panelId}
                   aria-describedby={selected.id === hotspot.id && panel === 'scene' ? topicBodyId : undefined}
                   title={hotspot.title[language]}
-                  onClick={() => { setGuided(false); setCompleted(false); setPanel('scene'); setSelectedId(hotspot.id); setExpanded(true); }}>
+                  onClick={() => { setGuided(false); setCompleted(false); setPanel('scene'); setSelectedId(hotspot.id); setExpanded(true); if (momentsEnabled) visitor.walkTo(hotspot); }}>
                   <span aria-hidden="true">{String(index + 1).padStart(2, '0')}</span>
                 </button>
               ))}
@@ -184,6 +198,7 @@ export default function FaithSpaceModal({ organization, language, onLanguageChan
             </div>
             <TraditionIntroduction religion={organization.religion} language={language} />
             <details className="faith-etiquette"><summary>{t.etiquette}</summary><p>{config.etiquette[language]}</p></details>
+            {momentsEnabled && <AvatarActions language={language} controller={visitor} showMotionPreference={false} />}
             <ReflectionTimer language={language} />
             <div className="faith-location"><p className="faith-overline">{t.facts}</p><p>{organization.district}{organization.village ? ` · ${organization.village}` : ''}</p><p>{organization.address}</p></div>
             </section>

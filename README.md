@@ -60,6 +60,12 @@ Run `npm run content:audit` for a read-only offline audit of profiles, tradition
 
 The release adds development-only `axe-core` checks and improves source-list heading/landmark structure, modal and loading-shell focus containment, and language-selection semantics. DOM checks do not measure rendered contrast, real-device layout or screen-reader usability. Browser initialization failed in this environment, so manual checks at 320, 375, 390 and 768 pixels and desktop, real-device testing, contrast and screen-reader checks remain unverified for V1.4. See the [accessibility review](docs/accessibility-review.md), [content-audit guide](docs/content-audit.md) and [prepared cultural-review workflow](docs/cultural-review-workflow.md) for evidence boundaries and follow-up work. External community review has not been performed; the workflow does not imply outreach, consent or endorsement.
 
+## V1.5a — Faith Moments
+
+Faith Spaces now includes an original small vector visitor. Hotspot text appears immediately while an optional, brief walk and observing gesture runs. Walk, sit, wave, observe and rest controls remain neutral; a new action or closing the scene cancels previous movement. There is no opening animation or audio.
+
+Animation On/Off is available throughout the scene. The device's reduced-motion preference takes precedence; an explicit Off setting stays off across scenes. Only this motion preference is stored locally. `VITE_FAITH_MOMENTS_ENABLED=false` hides the visitor and its controls. Shared-service flags remain off by default and are reserved for separately reviewed releases. See [Faith Moments](docs/faith-moments.md) and `.env.example`.
+
 ## Data Source
 
 - Source file: `臺北市已立案宗教團體點位資料.ods`
