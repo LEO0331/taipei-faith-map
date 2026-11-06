@@ -4,11 +4,27 @@ Mobile-first bilingual web app for exploring Taipei registered religious organiz
 
 [繁體中文說明](README-zh.md)
 
+## V2.0 integration status
+
+The dedicated backend, protected functions, retention job and health workflow have hosted evidence. Final integration adds public GitHub Variables to the existing Pages build, fail-closed enabled-feature configuration checks, and reproducible Playwright browser verification. Real static/mobile/bilingual/keyboard/PWA and passive-note-reading checks passed. Real Turnstile failed to return a token in the tested automated browsers, including manual attempts, so positive guest/peer/submission tests remain blocked. Both public shared flags and posting stay off; no activation PR is prepared while those gates fail. See [current evidence](docs/release-v2.0.md) and [launch statuses](docs/public-launch-checklist.md).
+
+After `npm ci`, install the test browser into an ignored workspace directory, build Pages, and run the real static browser suite (PowerShell):
+
+```powershell
+$env:PLAYWRIGHT_BROWSERS_PATH = "$PWD/.supabase-test/pw-browsers"
+npx playwright install chromium
+$env:GITHUB_PAGES = 'true'
+npm run build
+npm run test:browser
+```
+
+The pinned Playwright package is development-only. The browser suite uses a temporary loopback static server and sandboxed isolated contexts, writes ignored artifacts, and does not register guests or solve CAPTCHA. `test:browser:passive` additionally requires a separately prepared, configured private build and real hosted read access; follow the [integration guide](docs/supabase-integration.md).
+
 ## V1.6 — Production readiness and effortless exploration
 
 The welcome offers a short path into a visible Faith Space or the ordinary map, without compulsory onboarding. Existing brief avatar actions, motion settings and immediate cultural reading remain available. Quiet Garden is an optional neutral space with no conversation requirement; opening it or passively reading approved notes does not create a guest or require a submission challenge.
 
-V1.5 source is merged, but the shared backend has **not** been remotely configured or verified in this implementation environment. Both public shared flags and database posting remain off. V1.6 prepares controlled verification, private moderation/retention operations and GitHub Pages/PWA fixes; it does not activate services or promise continuous availability. Complete the [public launch checklist](docs/public-launch-checklist.md) before activation.
+At the V1.6 handoff, the shared backend had **not** been remotely configured or verified. Later V2.0 hosted evidence is recorded above. Both public shared flags and database posting remain off. V1.6 prepared controlled verification, private moderation/retention operations and GitHub Pages/PWA fixes; it did not activate services or promise continuous availability. Complete the [public launch checklist](docs/public-launch-checklist.md) before activation.
 
 Use the [demo guide](docs/demo-guide.md) for a solo walkthrough when shared services are unavailable. See [architecture](docs/architecture.md), [V1.6 release evidence](docs/release-v1.6.md), [accessibility review](docs/accessibility-review.md) and the existing [Supabase setup](docs/supabase-integration.md), [moderation](docs/quiet-corner-moderation.md) and [health monitoring](docs/supabase-health-check.md) guides for implementation boundaries and remaining operator checks. Local tests are not proof of deployed Auth, two-browser Presence, live moderation or a scheduled retention run.
 

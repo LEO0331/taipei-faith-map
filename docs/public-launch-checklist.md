@@ -74,3 +74,39 @@ Check boxes only after the associated action was actually performed. Local Postg
 The owner authorized actual backend setup. A dedicated Taipei Faith Map project was created after read-only inventory and an expressly approved quota-related project pause. Three version-matched migrations, both JWT-protected functions, approved server settings, hosted SQL/read-only checks and a genuinely executed/restored daily Cron job are recorded in [the current evidence](release-v2.0.md). Public joins and unauthenticated private joins were rejected in actual Realtime probes.
 
 These partial hosted results do not check off the full activation stages above. Turnstile was deferred and anonymous sign-in stays off; positive guest Auth, two-browser Presence, valid-session Edge/browser flows, moderation coverage and explicit public launch approval remain required. The direct hosted health query and operator-supplied [GitHub Actions run 42144704285](https://github.com/LEO0331/taipei-faith-map/actions/runs/42144704285) passed. The latter's job/step status and successful database-helper log were verified on 2026-11-06 at 09:34 Asia/Taipei; subsequent automatic scheduled runs remain to be observed. Both public shared flags and the verified posting switch remain false. Historical V1.5/V1.6 evidence is unchanged.
+
+## V2.0 final verification status — 2026-11-06
+
+The statuses below are scoped evidence for this follow-up. Earlier unchecked stage lists remain the operator runbook; a passing sub-check does not approve a whole stage. “Passed — live verified” can mean the explicitly named controlled real-browser/hosted environment, not an activated public feature.
+
+| Check | Status | Evidence / boundary |
+| --- | --- | --- |
+| Existing public static site, manifest/icons/subpath and Faith Space | Passed — live verified | Actual Pages URL; social entry absent, no Auth/CAPTCHA. New branch not publicly deployed. |
+| New workflow's public `vars.*` handoff and secret guard | Passed — offline only | Regression tests; both flags false. |
+| Actual repository Variable values | Not performed | Available connector cannot independently list them; owner reports configured. Verify in the reviewed Actions build. |
+| Both languages at desktop, 768/390/375/320px | Passed — live verified | 10 real Chromium controlled-build journeys; no horizontal overflow. |
+| Hotspot immediate text, optional actions, motion off/reduced motion | Passed — live verified | Actual UI and OS-preference emulation; no animation-dependent information. |
+| Keyboard wrap/Escape/focus/filter restoration and measured targets | Passed — live verified | Real keyboard/mouse, critical targets at least 44px. |
+| Scoped rendered accessibility/contrast | Passed — live verified | Eight browser axe audits; not whole-site conformance. |
+| Physical mobile, screen readers and actual browser zoom | Not performed | No NVDA/VoiceOver/TalkBack or real-device result. |
+| PWA cached shell, fresh HTML and cache boundaries | Passed — live verified | Real local worker/offline reload; tiles/unvisited lazy features not guaranteed. Full deployment upgrade remains unperformed. |
+| No automatic guest/CAPTCHA/SDK in solo exploration | Passed — live verified | Real browser network observation. |
+| Passive board reading and empty state | Passed — live verified | 10 private-preview journeys using real approved-note RPC; no Auth/CAPTCHA/Presence. |
+| Browser service-failure fallback | Passed — offline only | Explicit network failure injection at 320px in both languages. |
+| Anonymous Auth / Turnstile / Edge configuration | Passed — live verified | Protected CLI/metadata inspection; enabled provider and matching Edge secret digest. No values published. |
+| Missing/invalid Auth CAPTCHA and Edge negative paths | Passed — live verified | Actual 400/401/403/405 responses, zero users/notes created. |
+| Real valid Turnstile challenge | Failed | Widget failed to return token after automated and owner manual attempts. |
+| Expired/reused genuine CAPTCHA tokens | Blocked | No valid real token available; no fake success asserted. |
+| Two independently authenticated browsers and live neutral actions | Blocked | Required challenge failed before guest creation/join. |
+| Live peer payload/privacy, background/reconnect/replay/cleanup | Blocked | Mocked transport tests remain offline evidence; no actual peer stream reached. |
+| Pending/hidden privacy and privileged moderation/rate/retention RPCs | Passed — live verified | Earlier hosted transaction-only SQL suite; no public fixture or live guest submission. |
+| Full guest note → pending → approval → public → report/hide/delete | Blocked | Requires valid guest/CAPTCHA and a specifically controlled posting window. |
+| Daily retention definition and real daily execution | Passed — live verified | One active intended job; final daily-time run succeeded 2026-11-06 11:41 Taipei. |
+| Existing GitHub manual health run | Passed — live verified | Linked run 42144704285 and successful database-helper logs. |
+| Automatic GitHub schedule execution | Not performed | No scheduled run observed in queried run history; schedule unchanged. |
+| Moderator coverage and public-posting approval | Not performed | Must be explicitly assigned/approved by owner. |
+| Current posting pause/public UI gates | Passed — live verified | Posting false; actual public social entry absent; source flags false. |
+| Actual production rollback exercise | Not performed | Procedure prepared; no public social deployment was made/reverted. |
+| Public activation and deployment of enabled features | Blocked | Real challenge/guest/two-browser criteria incomplete; no activation PR or automatic merge. |
+
+Resolve Turnstile in an authorized ordinary browser and inspect provider analytics/allowed hostnames without changing production secrets in chat. Then re-run the blocked hosted paths with real independent sessions and explicit controlled test-content cleanup. Review/merge the configuration PR before any public enabled build; later posting still requires coverage and explicit owner approval.
