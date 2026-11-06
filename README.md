@@ -158,3 +158,13 @@ Publish the `dist` directory. If deploying under a repository subpath, set the V
 This dataset is a snapshot of registered religious organizations. Registered organization counts do not represent popularity, number of followers, attendance, activity level, or religious influence.
 
 For current information, refer to the responsible government authority and on-site notices.
+
+## V1.5b: Quiet Presence (optional)
+
+The neutral Quiet Garden uses one private, anonymous Supabase Realtime channel. Entry is explicit; solo exploration does not register a guest or load the SDK. Leaving or backgrounding disconnects the visit. Shared Presence is disabled by default and in the public deployment workflow.
+
+See [Supabase setup and verification](docs/supabase-integration.md) for Auth CAPTCHA, private-channel authorization, public configuration, guest retention and the required two-browser checks. Public builds reject privileged credentials in `VITE_` configuration. Anonymous Auth consumes its own single-use CAPTCHA token.
+
+The independent [health-check workflow](docs/supabase-health-check.md) performs a bounded, read-only database query three times daily. Configure its URL and publishable-key repository secrets separately; it neither deploys the site nor guarantees that a free project remains active.
+
+Local verification includes mocked client tests and actual isolated PostgreSQL policy tests. These do not establish deployed Supabase Auth, Realtime or two-session behavior. Keep shared flags off until those checks pass.
