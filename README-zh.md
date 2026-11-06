@@ -4,6 +4,14 @@
 
 [English README](README.md)
 
+## V1.6 — 正式環境準備與輕鬆探索
+
+首頁提供精簡說明，可直接探索目前可見的信仰空間，或繼續瀏覽地圖，不需強制導覽。既有短暫角色動作、動畫偏好與即時文化資訊仍可使用。靜心庭院是可選的中性空間，不要求交談；只開啟庭院或閱讀已審核留言，不會建立訪客或要求投稿驗證。
+
+V1.5程式已合併，但本次實作環境**尚未設定或驗證遠端共享後端**。公開的Presence／Corner旗標及資料庫投稿開關維持關閉。V1.6備妥受控驗證、私人審核／保存期限操作與GitHub Pages／PWA修正，不代表已啟用服務或保證持續可用。啟用前請逐項完成[公開上線檢查表](docs/public-launch-checklist.md)。
+
+共享服務不可用時，可依[展示指南](docs/demo-guide.md)展示完整的單人探索。詳見[系統架構](docs/architecture.md)、[V1.6實測紀錄](docs/release-v1.6.md)、[無障礙檢查](docs/accessibility-review.md)，以及既有的[Supabase設定](docs/supabase-integration.md)、[留言審核](docs/quiet-corner-moderation.md)及[健康檢查](docs/supabase-health-check.md)。本機測試不等於已驗證遠端Auth、雙瀏覽器Presence、公開審核或保存期限排程。
+
 ## 專案目的
 
 本專案為「臺北市已立案宗教團體點位資料」提供公開地圖與輕量儀表板。使用者可瀏覽已立案團體的位置、依行政區或宗教別篩選、查看可取得的慶典日期文字，並透過瀏覽器定位功能尋找附近的已立案團體。
@@ -129,29 +137,14 @@ npm run build
 
 ## 部署
 
-### Vercel
+前端沿用GitHub Pages。既有workflow以 `GITHUB_PAGES=true` 建置，將Vite base設為 `/taipei-faith-map/`，並明確關閉兩個共享服務旗標；只發布產生的 `dist` artifact。在本機驗證儲存庫子路徑建置：
 
-使用預設 Vite 設定：
-
-- 建置指令：`npm run build`
-- 輸出目錄：`dist`
-
-### Netlify
-
-使用：
-
-- 建置指令：`npm run build`
-- 發布目錄：`dist`
-
-### GitHub Pages
-
-在本機或 GitHub Actions 中建置：
-
-```bash
+```powershell
+$env:GITHUB_PAGES = 'true'
 npm run build
 ```
 
-發布 `dist` 目錄。若部署在儲存庫的子路徑下，請在建置前設定 Vite 的 `base` 選項。
+Manifest、圖示、應用程式scope及靜態／延遲載入資源必須在該base下解析。請依[上線檢查表](docs/public-launch-checklist.md)驗證更新、重新整理及離線行為，不假設所有延遲頁面或地圖圖磚可離線使用。Supabase健康檢查是獨立workflow，不部署網站，也不執行特權資料清理。
 
 ## 資料聲明
 

@@ -23,6 +23,10 @@
 .garden-service-notice { color: #706358; font-size: 13px; line-height: 1.8; }
 .garden-motion-control { margin-block: 12px; }
 .garden-dialog :focus-visible { outline: 3px solid #0f766e; outline-offset: 4px; }
+.garden-dialog button { min-height: 44px; white-space: normal; overflow-wrap: anywhere; }
+.garden-dialog-header > *, .garden-dialog p { min-width: 0; overflow-wrap: anywhere; }
+.garden-dialog button[aria-disabled='true'] { opacity: .65; cursor: default; }
+.garden-verification { margin-block: 14px; padding: 12px; border: 1px solid #dcd4c7; border-radius: 8px; }
 .guest-challenge { min-width: 0; margin-block: 14px; }
 .guest-challenge p { font-size: 12px; line-height: 1.8; color: #706358; }
 @media (max-width: 480px) { .garden-dialog-header h1 { flex: 1 1 100%; order: 2; } }

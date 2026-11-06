@@ -138,11 +138,11 @@ export default function QuietCorner({ language, onClose, challenge, captchaToken
       {readState === 'unavailable' && <p>{t.unavailable}</p>}
       {readState === 'ready' && !notes.length && <p>{t.empty}</p>}
       {readState === 'ready' && notes.length > 0 && <div className="quiet-note-board" role="list" aria-label={t.approved}>
-        {notes.map(note => <article className="quiet-note" role="listitem" key={note.id}>
+        {notes.map(note => <div className="quiet-note" role="listitem" key={note.id}>
           <p className="quiet-note-content">{note.content}</p>
           <p className="quiet-note-expiry">{t.expires} <time dateTime={note.expiresAt}>{date(note.expiresAt)}</time></p>
           <button className="text-button" onClick={event => { invoker.current = event.currentTarget; cancel(false); setReporting(note); }}>{t.report}<span className="quiet-sr-only">: {note.content}</span></button>
-        </article>)}
+        </div>)}
       </div>}
       {!panel && <div className="quiet-corner-actions"><button className="text-button" onClick={() => setRefreshKey(key => key + 1)} disabled={readState === 'loading'}>{t.refresh}</button><button className="primary-button" ref={element => { if (element && !invoker.current?.isConnected) invoker.current = element; }} onClick={event => { invoker.current = event.currentTarget; setFeedback(undefined); setComposing(true); }}>{t.write}</button></div>}
       {panel && <form className="quiet-note-composer" onSubmit={event => { event.preventDefault(); void send(); }}>

@@ -8,6 +8,22 @@ import QuietGarden from './QuietGarden';
 import QuietCorner from '../quiet-corner/QuietCorner';
 import './quiet-presence.css';
 
+function dialogControls(root: HTMLElement) {
+  return [...root.querySelectorAll<HTMLElement>('button, a[href], input, textarea, select, summary, iframe, [tabindex]')].filter(control => {
+    if (control.tabIndex < 0 || control.matches(':disabled') || control.closest('[hidden], [inert]')) return false;
+    for (let ancestor: HTMLElement | null = control; ancestor; ancestor = ancestor.parentElement) {
+      const style = getComputedStyle(ancestor);
+      if (style.display === 'none' || style.visibility === 'hidden' || style.visibility === 'collapse') return false;
+      if (ancestor instanceof HTMLDetailsElement && !ancestor.open) {
+        const summary = [...ancestor.children].find(child => child.tagName === 'SUMMARY');
+        if (!summary?.contains(control)) return false;
+      }
+      if (ancestor === root) break;
+    }
+    return true;
+  });
+}
+
 export default function QuietGardenDialog({ language, onLanguageChange, onClose }: { language: Language; onLanguageChange: (language: Language) => void; onClose: () => void }) {
   const flags = getFeatureFlags();
   const [captchaToken, setCaptchaToken] = useState<string>();
@@ -29,12 +45,12 @@ export default function QuietGardenDialog({ language, onLanguageChange, onClose 
   return <div className="garden-overlay"><div className="garden-dialog" role="dialog" aria-modal="true" aria-labelledby={heading} ref={dialog} onKeyDown={event => {
     if (event.key === 'Escape') { event.stopPropagation(); onClose(); }
     if (event.key !== 'Tab') return;
-    const controls = [...(dialog.current?.querySelectorAll<HTMLElement>('button, a[href], input, textarea, select, iframe, [tabindex]') ?? [])].filter(element => element.tabIndex >= 0 && !element.matches(':disabled') && !element.closest('[hidden]') && getComputedStyle(element).display !== 'none');
-    if (event.shiftKey && document.activeElement === controls[0]) { event.preventDefault(); controls.at(-1)?.focus(); }
+    const controls = dialog.current ? dialogControls(dialog.current) : [];
+    if (event.shiftKey && (document.activeElement === controls[0] || !controls.includes(document.activeElement as HTMLElement))) { event.preventDefault(); controls.at(-1)?.focus(); }
     else if (!event.shiftKey && document.activeElement === controls.at(-1)) { event.preventDefault(); controls[0]?.focus(); }
   }}>
     <header className="garden-dialog-header"><button className="text-button" ref={close} onClick={onClose}>{zh ? '返回原本的探索' : 'Return to exploration'}</button><h1 id={heading}>{zh ? '靜心庭院' : 'Quiet Garden'}</h1><LanguageToggle language={language} onChange={onLanguageChange} /></header>
-    <p className="garden-service-notice">{zh ? '共享功能需匿名服務工作階段，無需填寫帳號。這個中性庭院不分享你正在探索的教別或場所。' : 'Shared features use an anonymous service session without an account form. This neutral garden never shares the religion or place you are exploring.'}</p>
+    <p className="garden-service-notice">{zh ? '這是一處中性的共享庭院，可能遇見其他訪客。不必交談，隨時可以離開。你正在探索的教別與場所不會分享；只有進入陪伴或送出留言時才需要匿名訪客驗證。' : 'A neutral shared garden where other visitors may be present. No conversation is needed, and you can leave anytime. Your religion and place selections stay private. Guest verification is only needed to join, submit a note or report one.'}</p>
     <div className="garden-motion-control"><button className="text-button" aria-pressed={visitor.motionEnabled} onClick={() => visitor.setMotionEnabled(!visitor.motionEnabled)}>{zh ? visitor.motionEnabled ? '動畫：開啟' : '動畫：關閉' : visitor.motionEnabled ? 'Animation: On' : 'Animation: Off'}</button></div>
     <QuietGarden language={language} onClose={onClose} enabled={flags.quietPresence} motionEnabled={visitor.motionEnabled} captchaToken={captchaToken}
       notesSlot={flags.quietCorner && (cornerOpen ? <QuietCorner language={language} onClose={() => { setCornerOpen(false); setNoteToken(undefined); requestAnimationFrame(() => cornerInvoker.current?.focus()); }} captchaToken={noteToken}

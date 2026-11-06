@@ -52,3 +52,17 @@ When browser access is available, inspect every primary destination and the moda
 新增的 `axe-core` 僅供開發測試，JSDOM檢查英語的自由探索、文化導覽、場所介紹、日曆清單／活動、路線及歷史時間軸／故事章節。因沒有可靠的實際版面與顏色，刻意停用色彩對比規則；不能因此聲稱已驗證對比、觸控、縮放或真正的輔助科技宣告。執行結果應以 `npm test` 輸出為準。
 
 瀏覽器工具在初始化前因所需kernel資源路徑缺失而失敗，因此本版尚未完成320、375、390、768像素及桌面人工檢查，也未執行實機、NVDA／VoiceOver、瀏覽器axe、實際對比或減少動態效果檢查。先前版本的畫面與結果不能代替本版證據。工具可用後，須以雙語逐一檢查所有目的地、對話框、Tab順序、Enter／Space、Escape、焦點還原、導覽步驟、相關內容往返、隱藏區域與放大版面，並記錄裝置／瀏覽器、尺寸、日期與確切狀態。
+
+## V1.6 Quiet Companionship review — 2026-11-06
+
+The production-readiness and UX follow-up preserves the V1.4 checks above and adds structural coverage for Quiet Garden and Quiet Corner. A concrete defect found by axe was corrected: note cards used an `article` with an unsupported `listitem` role; they now use a valid list-item wrapper. Garden focus enumeration now excludes hidden/inert ancestors, computed hidden styles and closed disclosure contents. The loading/error shell has its own eagerly loaded overlay styling, contains focus, and changes to an unavailable message after ten seconds while retaining the return action.
+
+`src/__tests__/quietExperience.test.tsx` audits eight rendered states: dialog, approved-note reading, composer and report form, each in Chinese and English. All enabled axe rules passed. Colour contrast remains disabled in JSDOM. Together with the garden's transport/shell tests, 21 focused tests passed for explicit verification, passive reading, absence of invented peers, lifecycle and keyboard containment. App regressions cover the welcome action, filter/map preservation, language changes and invoking-focus restoration. Existing motion/reduced-motion and cancellation tests remain in the suite.
+
+The welcome has no onboarding dialog. Joining is separate from opening the garden; only an explicit join that needs a new guest mounts its verification widget. Reading approved notes mounts no CAPTCHA and creates no guest. A valid guest can join without another challenge; writing/reporting still requires fresh action-specific verification, and drafts survive the expected Auth challenge step.
+
+Mobile safeguards include 44px minimum action heights, two-column Faith Moments controls below 480px, wrapping bilingual garden controls, full-width bounded report selects, and the provider's [documented compact verification widget](https://developers.cloudflare.com/turnstile/get-started/client-side-rendering/widget-configurations/) to fit narrow nested forms. These are implementation safeguards, not measured viewport results.
+
+The V1.6 native computer-use attempt again failed before initialization with `failed to write kernel assets` (missing path). No desktop, 320/375/390/768px real-browser, screen-reader, actual touch, contrast, 200%/400% zoom or provider-iframe keyboard check was completed. NVDA, VoiceOver and TalkBack were not used. All manual rows above remain unverified for this release. Follow the [launch checklist](public-launch-checklist.md) and record real results before claiming those checks pass.
+
+繁體中文：V1.6補上庭院與留言角落八個雙語狀態的結構性axe檢查，並修正留言卡片ARIA角色、隱藏控制項焦點、載入備援與明確加入後才驗證的流程。44px按鈕、手機雙欄動作與緊湊驗證元件是程式防線，不能代替真實版面證據。瀏覽器初始化仍失敗，未執行任何螢幕閱讀器、實機、指定寬度、縮放、對比或驗證iframe的人工檢查。
