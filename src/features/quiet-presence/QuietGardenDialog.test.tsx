@@ -7,7 +7,8 @@ import { useVisitorMotion } from '../faith-moments/useVisitorMotion';
 
 vi.mock('../../utils/featureFlags', () => ({ getFeatureFlags: vi.fn() }));
 vi.mock('../faith-moments/useVisitorMotion', () => ({ useVisitorMotion: vi.fn() }));
-vi.mock('./QuietGarden', () => ({ default: ({ enabled, captchaToken, challenge, onCaptchaConsumed }: { enabled: boolean; captchaToken?: string; challenge?: React.ReactNode; onCaptchaConsumed?: () => void }) => <section data-testid="garden" data-enabled={String(enabled)} data-token={captchaToken}><button onClick={onCaptchaConsumed}>Consume verification</button>{challenge}</section> }));
+vi.mock('./QuietGarden', () => ({ default: ({ enabled, captchaToken, challenge, notesSlot, onCaptchaConsumed }: { enabled: boolean; captchaToken?: string; challenge?: React.ReactNode; notesSlot?: React.ReactNode; onCaptchaConsumed?: () => void }) => <section data-testid="garden" data-enabled={String(enabled)} data-token={captchaToken}><button onClick={onCaptchaConsumed}>Consume verification</button>{challenge}{notesSlot}</section> }));
+vi.mock('../quiet-corner/QuietCorner', () => ({ default: ({ onClose }: { onClose: () => void }) => <section aria-label="Notes"><button onClick={onClose}>Close notes</button></section> }));
 vi.mock('../../components/GuestChallenge', () => ({ GuestChallenge: ({ onToken, resetKey }: { onToken: (value: string) => void; resetKey: number }) => <button data-reset={resetKey} onClick={() => onToken('proof')}>Mock verification</button> }));
 const setMotionEnabled = vi.fn();
 beforeEach(() => {
@@ -18,6 +19,16 @@ beforeEach(() => {
 afterEach(() => { cleanup(); document.body.style.overflow = ''; });
 
 describe('quiet garden dialog shell', () => {
+  it('offers the board independently while Presence is disabled', () => {
+    vi.mocked(getFeatureFlags).mockReturnValue({ faithMoments: true, quietPresence: false, quietCorner: true });
+    render(<QuietGardenDialog language="en" onLanguageChange={vi.fn()} onClose={vi.fn()} />);
+    expect(screen.queryByRole('region', { name: 'Notes' })).toBeNull();
+    fireEvent.click(screen.getByRole('button', { name: 'Open Quiet Corner' }));
+    expect(screen.getByRole('region', { name: 'Notes' })).toBeTruthy();
+    expect(screen.getByTestId('garden').getAttribute('data-enabled')).toBe('false');
+    fireEvent.click(screen.getByRole('button', { name: 'Close notes' }));
+    expect(screen.queryByRole('region', { name: 'Notes' })).toBeNull();
+  });
   it('focuses close, contains keyboard focus and restores body scrolling on unmount', () => {
     document.body.style.overflow = 'scroll';
     const onClose = vi.fn();

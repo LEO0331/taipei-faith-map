@@ -39,8 +39,9 @@ describe('optional garden entry', () => {
     expect(screen.queryByRole('button', { name: '靜心庭院' })).toBeNull();
   });
 
-  it('preserves the map and filter and restores the invoking control on close', async () => {
-    vi.stubEnv('VITE_QUIET_PRESENCE_ENABLED', 'true');
+  it.each(['presence', 'corner'])('preserves exploration and restores focus with the %s flag independently enabled', async feature => {
+    vi.stubEnv('VITE_QUIET_PRESENCE_ENABLED', feature === 'presence' ? 'true' : 'false');
+    vi.stubEnv('VITE_QUIET_CORNER_ENABLED', feature === 'corner' ? 'true' : 'false');
     const { container } = render(<App />);
     await screen.findByRole('heading', { name: organization.name });
     fireEvent.change(screen.getByRole('searchbox'), { target: { value: organization.name } });

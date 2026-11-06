@@ -168,3 +168,11 @@ See [Supabase setup and verification](docs/supabase-integration.md) for Auth CAP
 The independent [health-check workflow](docs/supabase-health-check.md) performs a bounded, read-only database query three times daily. Configure its URL and publishable-key repository secrets separately; it neither deploys the site nor guarantees that a free project remains active.
 
 Local verification includes mocked client tests and actual isolated PostgreSQL policy tests. These do not establish deployed Supabase Auth, Realtime or two-session behavior. Keep shared flags off until those checks pass.
+
+## V1.5c: Quiet Corner (optional)
+
+Quiet Corner adds up to 15 approved, unexpired notes to the neutral garden. New notes remain private and pending until an operator approves them. Submissions and reports require a verified anonymous guest and a fresh action-specific CAPTCHA; server-side bounds, atomic rate limits and duplicate controls apply.
+
+Corner is controlled independently by `VITE_QUIET_CORNER_ENABLED=false`; the database posting switch also starts off. See [moderation, retention and deployment checks](docs/quiet-corner-moderation.md). No remote database, function, secret or moderation schedule has been deployed by this release. Complete the documented operational checks before enabling it.
+
+The implementation and verification record is in [docs/release-v1.5.md](docs/release-v1.5.md), including configuration, actual test results and remaining operational checks.
