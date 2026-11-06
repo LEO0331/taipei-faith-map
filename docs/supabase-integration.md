@@ -2,9 +2,9 @@
 
 ## Release state
 
-V1.5b adds the optional Quiet Garden and a read-only database health check. V1.5c adds the separately gated Quiet Corner. The ordinary map and Faith Moments work without either service. **No hosted project is configured or verified by this guide. Keep both shared-feature flags false in the public build until a controlled deployment and the manual checks below succeed.** The V1.5a–c pull requests are now merged as the V1.6 source baseline; no backend activation is implied by those merges.
+V1.5b adds the optional Quiet Garden and a read-only database health check. V1.5c adds the separately gated Quiet Corner. The ordinary map and Faith Moments work without either service. **V2.0 has bootstrapped a dedicated hosted backend, but public activation remains gated. Keep both shared-feature flags false until the remaining controlled Auth/CAPTCHA/browser checks and explicit launch approval succeed.** See the dated [hosted evidence](release-v2.0.md); merged source alone is not operational proof.
 
-The current workspace has no configured project URL, public key or server secrets. Local tests and any standalone PostgreSQL fixtures are not evidence of a deployed Supabase Auth/Realtime/Edge stack. Docker was unavailable in the implementation environment; genuine two-browser shared-presence verification remains an operator task unless separately recorded in release evidence.
+The V1.5/V1.6 runs had no remote configuration. The V2.0 run subsequently obtained authorized integration/CLI access, created and inspected a dedicated project, deployed the database/functions, verified hosted read/denial paths, and observed a real Cron run. Turnstile was deferred by the operator and anonymous sign-in remains off; genuine guest Auth, two-browser Presence and the browser submission lifecycle remain unverified. Standalone PostgreSQL fixtures and mocked tests are still separate evidence. No key values or private project references belong in this guide.
 
 ## Public build configuration
 
@@ -104,12 +104,22 @@ V1.5a–c are now the merged source baseline. Merge status does not establish pr
 
 Realtime's authorization is cached for the connection. Updating a policy does not instantly evict an already connected visitor; current [Realtime authorization guidance](https://supabase.com/docs/guides/realtime/authorization#updating-rls-policies) explains re-evaluation on connection or a new JWT and eventual JWT expiry. For an incident, pause posting immediately, hide affected notes and disable the social UI in a new build; use the project's supported Realtime/session controls for active connections and verify actual revocation behavior. Do not promise instant revocation from a policy edit alone.
 
-### What remains unverified
+### V1.6 verification boundary (historical)
 
-No remote project credentials are available to this implementation run. The procedure, local script tests and standalone PostgreSQL policy tests are preparation, not a successful hosted deployment. Project settings, actual user-JWT/CAPTCHA gateway behavior, two real browser sessions, successful configured Actions runs, provider usage and scheduled Cron history require an authorized operator's recorded results. The missing-configuration readiness command fails closed without making requests.
+The V1.6 implementation run had no remote project credentials. Its procedure, local script tests and standalone PostgreSQL policy tests were preparation, not a successful hosted deployment. Later V2.0 results are recorded separately below and in the dated release record; they do not retroactively establish V1.6 hosted testing. The missing-configuration readiness command continues to fail closed without making requests.
 
 ### 繁體中文操作摘要
 
 V1.5a–c 已成為合併後的程式基線，不代表 Supabase 已啟用。先確認指定測試專案，再以 CLI 檢視 migration list／db push dry-run，另行審閱與套用，不重設遠端資料庫。私人 SQL editor 執行準備度檢查，逐一審查全部 Realtime 政策與 RPC 定義；公開／匿名角色權限、真實 Auth／CAPTCHA、兩瀏覽器、投稿審核／檢舉／隱藏／到期及維護排程皆需實測紀錄。
 
 `node scripts/validateQuietReadiness.mjs` 只使用公開金鑰做健康／已核准投影／原始表拒絕讀取探測，不註冊訪客、不呼叫寫入 RPC，不印出金鑰、留言或回應本文。通過並不代表整體正式服務已驗證。Edge 使用者函式維持 `verify_jwt=true`，另由 Auth 查證匿名身分；API key 不是使用者 JWT。Realtime 政策更新也不會立即逐出既有連線。未完成真實驗證與操作人員責任分配時，Presence／Corner 與投稿開關均維持關閉。
+
+## V2.0 authorized access follow-up
+
+Authorized remote configuration was performed on the dedicated Taipei Faith Map project, after inventory, explicit quota-related pause authorization, successful CLI login and migration dry-runs. The three repository migration versions match remote history. Both functions are active with JWT verification; five protected server settings and the Auth site URL were applied after specific confirmation. No history repair, remote reset or unrelated schema change occurred.
+
+The supported managed Realtime relation appeared after a controlled private-channel initialization probe. Its RLS was already enabled; do not replace it with the standalone test fixture. Dashboard private-only configuration was operator-applied and verified through rejected public joins. The CLI's current schema does not support `realtime.private_only`; a config push is not proof of this setting.
+
+Hosted verification passed the eight-part audit, public health/projection/raw-table-denial probes, and [`hosted_quiet_corner.sql`](../supabase/tests/hosted_quiet_corner.sql). The latter requires an empty controlled board, installs no persistent test helper, and rolls back every fixture and temporary transaction-local posting change. It exercises real hosted roles/RPCs, not cryptographic user authentication. Never run `bootstrap.sql` on a managed project.
+
+After explicit approval, one guarded daily retention job was configured. The same job succeeded under a controlled minute schedule and was restored to daily UTC 03:41; no minute schedule remains. Inspect history rather than assuming future success. The additional Cron extension migration enables the module only; the operator script owns scheduling. Turnstile remains unset by operator choice, anonymous Auth remains disabled, and the initial/private posting switch is false. [Current evidence and remaining actions](release-v2.0.md) distinguish these completed operations from unverified guest/browser flows and GitHub workflow execution.

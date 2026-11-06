@@ -68,3 +68,9 @@ Scheduled reads may reduce inactivity risk but cannot guarantee that a Free proj
 ## Evidence and remaining work
 
 Check boxes only after the associated action was actually performed. Local PostgreSQL role fixtures, mocked Edge/Auth tests and a merged PR do not prove hosted JWT verification, two-browser Presence, deployed moderation, retention scheduling or a live workflow run. Record mobile visual and assistive-technology tools by name; do not claim NVDA, VoiceOver or TalkBack testing unless used. The release record must distinguish implementation, local validation and live activation.
+
+## V2.0 authorized remote workstream
+
+The owner authorized actual backend setup. A dedicated Taipei Faith Map project was created after read-only inventory and an expressly approved quota-related project pause. Three version-matched migrations, both JWT-protected functions, approved server settings, hosted SQL/read-only checks and a genuinely executed/restored daily Cron job are recorded in [the current evidence](release-v2.0.md). Public joins and unauthenticated private joins were rejected in actual Realtime probes.
+
+These partial hosted results do not check off the full activation stages above. Turnstile was deferred and anonymous sign-in stays off; positive guest Auth, two-browser Presence, valid-session Edge/browser flows, moderation coverage and explicit public launch approval remain required. The direct hosted health query passed, while a successful configured GitHub Actions run is separately pending evidence. Both public shared flags and the verified posting switch remain false. Historical V1.5/V1.6 evidence is unchanged.
