@@ -110,3 +110,14 @@ The statuses below are scoped evidence for this follow-up. Earlier unchecked sta
 | Public activation and deployment of enabled features | Blocked | Real challenge/guest/two-browser criteria incomplete; no activation PR or automatic merge. |
 
 Resolve Turnstile in an authorized ordinary browser and inspect provider analytics/allowed hostnames without changing production secrets in chat. Then re-run the blocked hosted paths with real independent sessions and explicit controlled test-content cleanup. Review/merge the configuration PR before any public enabled build; later posting still requires coverage and explicit owner approval.
+
+## Owner-authorized Garden pilot exception — 2026-11-06
+
+The owner has now expressly requested a Garden-only ordinary-browser pilot despite the outstanding automated positive-challenge/two-peer checks. This limited authorization supersedes the earlier blanket frontend hold **for Quiet Presence only**. The earlier matrix remains the historical test result; blocked paths are not relabelled passed.
+
+- Prepared for owner review: workflow Presence true, Corner false; real CAPTCHA/JWT/private authorization and explicit opt-in unchanged.
+- Verified before preparation: deployed public URL/publishable/Site Key match intended protected inputs; remote posting false, existing guest policies and maintenance job present.
+- Pending: owner merge and successful Pages deployment, actual entry visibility, real challenge/anonymous join and two-profile peer checks.
+- Still prohibited by this authorization: Corner/posting activation, security bypass, fake visitors or claiming full readiness. If the pilot fails, retain evidence and roll the Presence flag back through a reviewed build.
+
+Operator test: normal Chrome/Edge profile A joins after real verification; independent profile B does the same; each sees one other visitor; wave/sit/acknowledgement, leave/background cleanup and close/focus return are observed. Record errors by stage without credentials or tokens. No scripted challenge solving is required or permitted.
