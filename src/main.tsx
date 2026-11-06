@@ -16,7 +16,10 @@ createRoot(document.getElementById('root')!).render(
 if ('serviceWorker' in navigator && import.meta.env.PROD) {
   window.addEventListener('load', () => {
     navigator.serviceWorker
-      .register(getPublicAssetPath('sw.js', import.meta.env.BASE_URL))
+      .register(getPublicAssetPath('sw.js', import.meta.env.BASE_URL), {
+        scope: import.meta.env.BASE_URL,
+        updateViaCache: 'none',
+      })
       .catch(() => undefined);
   });
 }

@@ -2,7 +2,7 @@
 
 ## Release state
 
-V1.5b adds the optional Quiet Garden and a read-only database health check. V1.5c adds the separately gated Quiet Corner. The ordinary map and Faith Moments work without either service. **No hosted project is configured or verified by this guide. Keep both shared-feature flags false in the public build until a controlled deployment and the manual checks below succeed.** The three focused pull requests form a stack: review A, then B, then C; none is merged or deployed automatically.
+V1.5b adds the optional Quiet Garden and a read-only database health check. V1.5c adds the separately gated Quiet Corner. The ordinary map and Faith Moments work without either service. **No hosted project is configured or verified by this guide. Keep both shared-feature flags false in the public build until a controlled deployment and the manual checks below succeed.** The V1.5a–c pull requests are now merged as the V1.6 source baseline; no backend activation is implied by those merges.
 
 The current workspace has no configured project URL, public key or server secrets. Local tests and any standalone PostgreSQL fixtures are not evidence of a deployed Supabase Auth/Realtime/Edge stack. Docker was unavailable in the implementation environment; genuine two-browser shared-presence verification remains an operator task unless separately recorded in release evidence.
 
@@ -67,7 +67,7 @@ Scheduled health reads are separate from website deployment. They may help detec
 
 ## 繁體中文
 
-V1.5b的靜心庭院及V1.5c的留言角落各自受旗標控制。此文件沒有代表已設定或驗證遠端專案；公開版本的共享旗標維持 `false`，待受控環境與人工整合檢查完成後才考慮啟用。一般地圖與單人信仰片刻不依賴 Supabase。三個階段以堆疊PR分開審查，不自動合併或部署。Docker不可用，單獨PostgreSQL測試也不能代替完整Supabase與兩瀏覽器驗證。
+V1.5b的靜心庭院及V1.5c的留言角落各自受旗標控制。此文件沒有代表已設定或驗證遠端專案；公開版本的共享旗標維持 `false`，待受控環境與人工整合檢查完成後才考慮啟用。一般地圖與單人信仰片刻不依賴 Supabase。V1.5a–c 已合併為 V1.6 程式基線，合併不代表後端已部署或啟用。Docker不可用，單獨PostgreSQL測試也不能代替完整Supabase與兩瀏覽器驗證。
 
 公開建置只放 `VITE_` 公開設定：三個功能旗標、專案URL、`sb_publishable_…`金鑰及Turnstile網站金鑰。秘密金鑰、資料庫密碼、HMAC與CAPTCHA秘密皆不可進入前端。公開金鑰不是訪客身分；匿名登入仍在Supabase建立有 `authenticated` 角色及 `is_anonymous` 宣告的內部Auth身分。
 
@@ -88,3 +88,28 @@ An isolated PostgreSQL 18 instance ran `supabase/tests/bootstrap.sql`, the phase
 The optional frontend and transport have mocked lifecycle, validation, CAPTCHA and failure tests. The production bundle loads the SDK in a separate chunk. No remote project, Auth CAPTCHA configuration, GitHub health secrets or genuine two-browser session was available for verification. Both shared deployment flags remain false.
 
 Turnstile loads only inside an explicitly opened optional feature. Use an authorized site key for the deployed hostname, enable the matching Auth CAPTCHA provider, and verify its real behavior before enabling Presence. Browser verification failures leave exploration available.
+
+## V1.6 controlled deployment procedure
+
+V1.5a–c are now the merged source baseline. Merge status does not establish production activation. V1.6 keeps both public shared flags off until the checks below have actual recorded results.
+
+1. Identify the intended staging project and operator; privately inspect API settings, Auth anonymous sign-in, Turnstile site/secret and hostname restrictions. API keys identify the application, while the guest's JWT identifies the user. Current [API key guidance](https://supabase.com/docs/guides/getting-started/api-keys) distinguishes public `sb_publishable_…` from privileged `sb_secret_…`; neither is a user JWT. Do not put either API key in `Authorization` as if it were one.
+2. With an installed, authenticated Supabase CLI, link only the reviewed project (`supabase link --project-ref YOUR_PROJECT_REF`). Inspect `supabase migration list`, then `supabase db push --dry-run`. Review the target and proposed changes before the deliberately separate `supabase db push`. Do not use `db reset` against a remote project, replay already-applied migrations or drop managed objects to resolve a mismatch. Prefer a reviewed additive migration if the real project differs.
+3. Run [`supabase/operations/verify-quiet-readiness.sql`](../supabase/operations/verify-quiet-readiness.sql) in the intended project's private SQL editor while posting is paused. Every boolean must pass. Review **all** Realtime policies: permissive policies combine with OR, and unrelated broad grants/policies can undermine this application's narrow rules. The two policy names existing is only an inventory check. Inspect `get_approved_quiet_notes` and privileged function definitions and run controlled public/guest allow-and-deny tests; do not deploy the standalone bootstrap fixture to Supabase.
+4. Confirm injected `SUPABASE_PUBLISHABLE_KEYS` and `SUPABASE_SECRET_KEYS` dictionaries contain the expected `default` entries in the Edge environment. Privately set only the custom server values from `supabase/functions/.env.example`, then deploy `submit-quiet-note` and `report-quiet-note` individually. Retain `verify_jwt=true`: these are user-JWT functions, unlike service-to-service functions that accept a secret API key. The [current user-function guidance](https://supabase.com/docs/guides/functions/auth#authenticated-user-calls) recommends retaining the platform check. Our handler independently verifies the anonymous user through Auth and verifies action-specific CAPTCHA before privileged RPC use.
+5. Run `node scripts/validateQuietReadiness.mjs` with `SUPABASE_URL` and `SUPABASE_PUBLISHABLE_KEY` privately configured. It first performs the existing real health read, checks the bounded public note projection and requires public raw-table reads to be denied. It sends only a public `apikey`, no guest Auth or mutation. Results use fixed probe names, never content, credentials or response diagnostics. A passing empty board cannot prove approved-only selection, Auth, CAPTCHA, Realtime, moderation, retention or production readiness; complete controlled lifecycle tests separately.
+6. Follow the [moderation and daily maintenance setup](quiet-corner-moderation.md#v16-operator-checklist-and-daily-schedule). First verify an actual controlled submission remains pending; privately approve it, check public display fields, report, hide, expire and clean it. Then verify a scheduled maintenance run. Do not manufacture publicly approved demo content.
+7. Configure the existing health workflow separately and record its manual run URL/result. Complete the genuine two-session Presence matrix above, including unauthorized topics/identities, invalid payloads, leave/background/expiry and preserved exploration. Record timestamp, deployed commit, project environment, observer and actual outcome; do not include JWTs or private note text in public evidence.
+8. Stage activation separately: solo → verified Presence → approved-note reading with posting still false → posting only with verified moderation coverage/retention/emergency controls. Public deployment flags remain false in this repository. A local/staging flag is not public activation authorization.
+
+Realtime's authorization is cached for the connection. Updating a policy does not instantly evict an already connected visitor; current [Realtime authorization guidance](https://supabase.com/docs/guides/realtime/authorization#updating-rls-policies) explains re-evaluation on connection or a new JWT and eventual JWT expiry. For an incident, pause posting immediately, hide affected notes and disable the social UI in a new build; use the project's supported Realtime/session controls for active connections and verify actual revocation behavior. Do not promise instant revocation from a policy edit alone.
+
+### What remains unverified
+
+No remote project credentials are available to this implementation run. The procedure, local script tests and standalone PostgreSQL policy tests are preparation, not a successful hosted deployment. Project settings, actual user-JWT/CAPTCHA gateway behavior, two real browser sessions, successful configured Actions runs, provider usage and scheduled Cron history require an authorized operator's recorded results. The missing-configuration readiness command fails closed without making requests.
+
+### 繁體中文操作摘要
+
+V1.5a–c 已成為合併後的程式基線，不代表 Supabase 已啟用。先確認指定測試專案，再以 CLI 檢視 migration list／db push dry-run，另行審閱與套用，不重設遠端資料庫。私人 SQL editor 執行準備度檢查，逐一審查全部 Realtime 政策與 RPC 定義；公開／匿名角色權限、真實 Auth／CAPTCHA、兩瀏覽器、投稿審核／檢舉／隱藏／到期及維護排程皆需實測紀錄。
+
+`node scripts/validateQuietReadiness.mjs` 只使用公開金鑰做健康／已核准投影／原始表拒絕讀取探測，不註冊訪客、不呼叫寫入 RPC，不印出金鑰、留言或回應本文。通過並不代表整體正式服務已驗證。Edge 使用者函式維持 `verify_jwt=true`，另由 Auth 查證匿名身分；API key 不是使用者 JWT。Realtime 政策更新也不會立即逐出既有連線。未完成真實驗證與操作人員責任分配時，Presence／Corner 與投稿開關均維持關閉。

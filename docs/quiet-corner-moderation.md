@@ -169,3 +169,40 @@ Record which checks actually completed. Docker was unavailable during implementa
 留言最遲於建立30日後失去公開資格；待審7日未處理、隱藏後7日、檢舉30日與節流最後使用24小時依維護程序刪除，留言刪除亦連帶刪除檢舉。`maintain_quiet_corner()`只提供清理邏輯，不自行排程、不刪Auth使用者。啟用投稿前須設定並驗證有權限的每日維護，否則到期列雖不再公開，仍可能在私下留存。健康檢查僅唯讀，不得拿來做清理、審核或遷移。
 
 公開啟用前應實測未登入與匿名訪客的權限拒絕、公開RPC範圍、JWT／CAPTCHA／Origin／大小驗證、併發節流、去重、審核、檢舉、停寫與到期清理，再於受控瀏覽器完成真實投稿與私人核准／隱藏流程。Docker不可用時的獨立PostgreSQL及mock Edge測試，不能宣稱已驗證完整Supabase、遠端部署或兩個共享工作階段。未完成就維持公開旗標與投稿設定關閉。
+
+## V1.6 operator checklist and daily schedule
+
+These are prepared operator actions, not a claim that maintenance is scheduled. Use the existing protected Dashboard/SQL editor; do not build a browser admin tool or send privileged credentials to GitHub Pages.
+
+Before opening posting, assign a named owner and backup, a review cadence and incident contact. At each review: inspect the bounded pending queue; read each note and choose one moderation action; inspect and resolve reports; check `posting_enabled`, retention counts and the latest maintenance run. Pause posting whenever coverage is unavailable. Resume deliberately only after the cause is resolved and both the moderation queue and failed maintenance runs have been reviewed:
+
+```sql
+-- Emergency pause takes effect without rebuilding the frontend.
+update public.quiet_corner_settings set posting_enabled = false where id = 1;
+select posting_enabled from public.quiet_corner_settings where id = 1;
+-- Deliberate resume ONLY after the readiness checklist passes:
+-- update public.quiet_corner_settings set posting_enabled = true where id = 1;
+```
+
+For secure daily maintenance, use [Supabase Cron](https://supabase.com/docs/guides/cron) to run only `select public.maintain_quiet_corner();` inside PostgreSQL. No API key, HTTP invocation, new public function or network credential is needed. The existing maintenance function is revoked from `PUBLIC`, `anon` and `authenticated`; the authorized scheduling `postgres` operator can execute it. It only deletes this application's expired/old notes, associated reports and stale rate counters, and repeat execution is safe. It does not delete Auth users or unrelated data.
+
+1. Review `maintain_quiet_corner` and the retention rules, run controlled database tests, and inspect counts using [`verify-quiet-readiness.sql`](../supabase/operations/verify-quiet-readiness.sql). A direct maintenance invocation deletes eligible records; only run it after accepting that policy for the intended project.
+2. Enable the `pg_cron` module through **Dashboard → Integrations → Cron** as described in [Cron installation](https://supabase.com/docs/guides/cron/install). Do not drop/recreate the extension: it may own other application jobs.
+3. Review and deliberately run [`schedule-quiet-retention.sql`](../supabase/operations/schedule-quiet-retention.sql) as the authorized `postgres` operator. This is an operator setup script, **not an automatic migration**. It checks the role, installed extension, UTC timezone, maintenance permissions and conflicting job configuration before scheduling `taipei-faith-map-quiet-retention-v1` for **03:41 UTC / 11:41 Asia/Taipei daily**. Re-running the same named setup updates its one intended job rather than creating duplicates; a conflicting command/owner/database fails closed.
+4. Run [`inspect-quiet-retention.sql`](../supabase/operations/inspect-quiet-retention.sql) or open Cron **History**. Confirm the exact command, database, `postgres` owner and active daily schedule. Observe an actual scheduled run with `status='succeeded'`, then inspect retention counts; an active job row alone is not evidence it ran. Record the timestamp and controlled verification result privately.
+5. Review missed, failed or long-running executions daily. `cron.job_run_details` records status and return information; this repository does not add an external alerting service. An error or missed run requires operator investigation, a reviewed manual retry where appropriate and posting pause if retention is no longer assured. Cron run history itself has separate provider/operator retention and must not grow indefinitely; review that separately without deleting other jobs' history indiscriminately. See the supported [Cron quickstart](https://supabase.com/docs/guides/cron/quickstart).
+6. To suspend only this job, use the Dashboard Active/Inactive switch. To remove it, deliberately run [`unschedule-quiet-retention.sql`](../supabase/operations/unschedule-quiet-retention.sql), which checks ownership/command and targets only this named job. It is safe when the job is already absent. Pause posting while maintenance is unavailable. Unscheduling neither removes notes nor automatically changes posting; frontend flags are also separate.
+
+Keep cleanup independent of `.github/workflows/supabase-health-check.yml`. That workflow holds only a public publishable key and must remain read-only. No privileged key belongs in repository Actions for this database-local schedule.
+
+### Schedule verification limits
+
+The SQL policy/maintenance function can be tested on isolated PostgreSQL, but that does not test managed Supabase Cron. No remote schedule, successful scheduled run or operational observation is claimed here. The operator must verify the supported managed extension, privileges, timezone and actual history before enabling submissions. Existing backend, anonymous Auth and CAPTCHA tests remain mandatory even when the job is scheduled.
+
+### 繁體中文操作摘要
+
+指定主要操作人員、備援與檢視頻率後，才可考慮投稿。每次檢查待審留言、檢舉、投稿開關、保存期限與維護結果；無人值守或維護失效就直接將資料庫 `posting_enabled=false`，不需要重新部署前端。恢復投稿須另行確認原因解除與審核／保存責任，不能只切換前端旗標。
+
+每日清理採 Supabase Cron 在資料庫內直接呼叫現有 `maintain_quiet_corner()`，不需要 API secret，也不開公開維護端點。先在指定專案啟用 Cron，審閱後以私人 `postgres` 操作者執行 `supabase/operations/schedule-quiet-retention.sql`，設定每日 UTC 03:41／臺北 11:41 的單一命名工作。腳本檢查角色、UTC、函式權限與名稱衝突；不是自動 migration，也尚未套用遠端。再執行 inspect 腳本／Cron History，確認真正的排程成功執行與清理結果，不能僅以 active 列宣稱成功。
+
+暫停可用 Dashboard Active 開關；移除只用具名稱、命令與擁有者防線的 unschedule 腳本，不刪除 pg_cron 或其他工作。操作人員每日檢查錯誤／漏跑並管理 Cron 歷史保存，必要時停止投稿。健康檢查保持獨立唯讀，不能加上具權限的清理金鑰。目前沒有遠端設定、真正排程成功或正式維護的完成宣告。
