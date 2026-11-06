@@ -53,11 +53,13 @@ No application records existed to delete. The RPC remains non-executable by publ
 
 ## Health workflow and remaining operator work
 
-The existing workflow remains unchanged: `17 2,10,18 * * *` UTC plus manual dispatch, URL/publishable key only. The direct hosted health read passed. Available GitHub tools do not expose secret management or workflow dispatch; the operator has been offered the prepared public configuration in an ignored local file for secure repository setup. A successful GitHub Actions run is not yet recorded here.
+The existing workflow remains unchanged: `17 2,10,18 * * *` UTC plus manual dispatch, URL/publishable key only. The direct hosted health read passed. The operator subsequently configured the repository inputs and supplied [run 42144704285](https://github.com/LEO0331/taipei-faith-map/actions/runs/42144704285). GitHub job metadata confirms `database-read` completed successfully, including **Verify read-only database health record**. Logs show checkout of `main` commit `9052d77432b3e223f43e40e74db4ced61d797276`, Node 22.23.4 and execution of `node scripts/checkSupabaseHealth.mjs`. At **2026-11-06 01:34:18.6637691 UTC / 09:34:18 Asia/Taipei**, the helper reported success. Both configured inputs were masked in the log; their values were not retrieved or published.
+
+The workflow and helper at that tested commit match this workstream's versions. The helper only reports success after the real read-only `app_healthcheck` query returns its exact expected record; this is an observed Actions database check, not a mocked test or merely a configured schedule. It establishes that run's configured inputs/query worked at that time. No automatic scheduled firing or future availability guarantee is inferred. The runner emitted action-runtime deprecation warnings; they did not fail the health step.
 
 The operator chose to leave Turnstile unset, so anonymous Auth remains off. Real guest signup/session expiry, valid-guest private Presence, two genuinely independent browsers, CAPTCHA enforcement with a valid session, Edge submission/reporting and the complete browser note lifecycle remain unverified. Hosted SQL role/moderation checks do not substitute for those flows. Browser automation remains unavailable; no screen-reader/real-device result is claimed.
 
-Next steps: add real Turnstile values through protected interfaces; review/enable anonymous Auth together with CAPTCHA and rate limits; complete controlled hosted Auth/Presence/Edge/browser tests; configure the existing GitHub secrets and observe manual health execution; maintain operator coverage and watch the daily Cron run. Use [the launch checklist](public-launch-checklist.md) and [setup guide](supabase-integration.md).
+Next steps: add real Turnstile values through protected interfaces; review/enable anonymous Auth together with CAPTCHA and rate limits; complete controlled hosted Auth/Presence/Edge/browser tests; observe subsequent automatic health/Cron runs and maintain operator coverage. Use [the launch checklist](public-launch-checklist.md) and [setup guide](supabase-integration.md).
 
 ## Local regression and activation boundary
 
