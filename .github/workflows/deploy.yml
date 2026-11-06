@@ -40,6 +40,9 @@ jobs:
           VITE_QUIET_PRESENCE_ENABLED: 'false'
           VITE_QUIET_CORNER_ENABLED: 'false'
 
+      - name: Verify GitHub Pages assets
+        run: node scripts/checkPagesBuild.mjs
+
       - name: Setup Pages
         uses: actions/configure-pages@v5
 

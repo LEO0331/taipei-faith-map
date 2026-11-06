@@ -51,3 +51,7 @@ See [Supabase integration](supabase-integration.md) and [health monitoring](supa
 The PostgreSQL fixture mocks Supabase Auth claims and the Realtime table; it does not verify JWT signatures, gateway behavior or actual sockets. Docker daemon was unavailable, so no full local Supabase stack ran. Mocked Edge tests are not deployment evidence.
 
 Browser automation failed during initialization with `failed to write kernel assets` / missing path. Visual, genuine two-browser Presence, deployed Auth/CAPTCHA, live Edge submission/approval/reporting and configured scheduled health checks remain unverified. Keep B/C off until those checks are completed in an authorized controlled environment. No public notes, guest sessions, successful deployment or moderation actions are fabricated in this record.
+
+## V1.6 baseline note
+
+V1.5a–c were subsequently merged into `main` (V1.6 baseline `539e4d3`). The record above describes the original V1.5 handoff and its verification limits. Merged source is not evidence of remote Supabase activation; the V1.6 readiness work continues to keep shared features disabled pending controlled verification.

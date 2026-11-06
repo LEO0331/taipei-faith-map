@@ -25,22 +25,66 @@ export class QuietServiceUnavailableError extends Error {
   constructor() { super('Optional quiet service is unavailable'); this.name = 'QuietServiceUnavailableError'; }
 }
 
+export class QuietVerificationRequiredError extends QuietServiceUnavailableError {
+  constructor() { super(); this.name = 'QuietVerificationRequiredError'; }
+}
+
 let clientPromise: Promise<SupabaseClient | undefined> | undefined;
 let guestPromise: Promise<SupabaseClient> | undefined;
 let guestCaptcha: string | undefined;
 let guestCaptchaConsumed = false;
 const captchaListeners = new Set<() => void>();
 
-/** Network requests have a deadline and never attach the browser's cookies. */
+const MAX_QUIET_RESPONSE_BYTES = 128 * 1024;
+
+/** Bound the complete optional API response, including its body, without cookies. */
 async function quietFetch(input: Parameters<typeof fetch>[0], init?: RequestInit): Promise<Response> {
   const controller = new AbortController();
   const abort = () => controller.abort();
-  const signal = init?.signal;
+  const signal = init?.signal ?? (input instanceof Request ? input.signal : undefined);
+  let reader: ReadableStreamDefaultReader<Uint8Array> | undefined;
+  let rejectAborted: (() => void) | undefined;
+  const cancellation = new Promise<never>((_resolve, reject) => {
+    rejectAborted = () => {
+      void reader?.cancel().catch(() => undefined);
+      reject(new QuietServiceUnavailableError());
+    };
+    controller.signal.addEventListener('abort', rejectAborted, { once: true });
+  });
   if (signal?.aborted) controller.abort();
   else signal?.addEventListener('abort', abort, { once: true });
   const timer = setTimeout(abort, 8000);
-  try { return await fetch(input, { ...init, credentials: 'omit', cache: 'no-store', signal: controller.signal }); }
-  finally { clearTimeout(timer); signal?.removeEventListener('abort', abort); }
+  const response = async () => {
+    const result = await fetch(input, { ...init, credentials: 'omit', cache: 'no-store', signal: controller.signal });
+    if (controller.signal.aborted) { void result.body?.cancel().catch(() => undefined); throw new QuietServiceUnavailableError(); }
+    if (Number(result.headers.get('content-length')) > MAX_QUIET_RESPONSE_BYTES) {
+      void result.body?.cancel().catch(() => undefined);
+      throw new QuietServiceUnavailableError();
+    }
+    if (!result.body) return result;
+    reader = result.body.getReader();
+    const chunks: Uint8Array[] = [];
+    let size = 0;
+    while (true) {
+      const part = await reader.read();
+      if (controller.signal.aborted) throw new QuietServiceUnavailableError();
+      if (part.done) break;
+      size += part.value.byteLength;
+      if (size > MAX_QUIET_RESPONSE_BYTES) { controller.abort(); throw new QuietServiceUnavailableError(); }
+      chunks.push(part.value);
+    }
+    reader.releaseLock(); reader = undefined;
+    const body = new Uint8Array(size);
+    let offset = 0;
+    for (const chunk of chunks) { body.set(chunk, offset); offset += chunk.byteLength; }
+    return new Response(body.buffer, { status: result.status, statusText: result.statusText, headers: result.headers });
+  };
+  try { return await Promise.race([response(), cancellation]); }
+  finally {
+    clearTimeout(timer); signal?.removeEventListener('abort', abort);
+    void reader?.cancel().catch(() => undefined);
+    if (rejectAborted) controller.signal.removeEventListener('abort', rejectAborted);
+  }
 }
 
 /** Called only after an optional panel is explicitly used; importing this file is inert. */
@@ -79,7 +123,8 @@ export async function getGuestSession({ captchaToken, onCaptchaConsumed }: { cap
       // A failed verification is not permission to create another account silently.
       throw new QuietServiceUnavailableError();
     }
-    if (typeof captchaToken !== 'string' || !captchaToken.trim() || new TextEncoder().encode(captchaToken).length > 4096) throw new QuietServiceUnavailableError();
+    if (captchaToken === undefined || (typeof captchaToken === 'string' && !captchaToken.trim())) throw new QuietVerificationRequiredError();
+    if (typeof captchaToken !== 'string' || new TextEncoder().encode(captchaToken).length > 4096) throw new QuietServiceUnavailableError();
     guestCaptchaConsumed = true;
     for (const listener of captchaListeners) { try { listener(); } catch { /* A stale UI callback must not alter authentication. */ } }
     const signedIn = await client.auth.signInAnonymously({ options: { captchaToken } });
@@ -87,7 +132,7 @@ export async function getGuestSession({ captchaToken, onCaptchaConsumed }: { cap
     const verified = await client.auth.getUser();
     if (verified.error || verified.data.user?.is_anonymous !== true) throw new QuietServiceUnavailableError();
     return client;
-  })().catch(() => { throw new QuietServiceUnavailableError(); }).finally(() => {
+  })().catch(error => { throw error instanceof QuietVerificationRequiredError ? error : new QuietServiceUnavailableError(); }).finally(() => {
     guestPromise = undefined; guestCaptcha = undefined; guestCaptchaConsumed = false; captchaListeners.clear();
   });
   return guestPromise;

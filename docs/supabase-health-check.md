@@ -48,3 +48,13 @@ Implementation and mocked workflow checks are local evidence only. No production
 有效結果必須是 HTTP 200，且 JSON 僅含一筆 `id:1`、`status:'ok'`；讀取上限 1024 bytes。HTTP 重新導向會被拒絕，避免將金鑰帶往其他目的地。測試只使用模擬回應，不需要真實專案；必須在設定完成後實際執行成功，才能聲稱正式健康檢查成功。
 
 定期讀取可能降低 Free 專案因活動不足暫停的風險，但不是持續上線保證。Supabase 政策及恢復期限可能變動；GitHub 排程也可能延遲、略過，公開儲存庫長期無活動時還可能停用。請參考上方官方文件，必要時由操作人員在 Dashboard 手動恢復，或在 GitHub Actions 暫停這個工作流程；這些操作不影響 GitHub Pages 的既有部署。
+
+## V1.6 verification handoff
+
+V1.6 retains this single workflow and its existing schedule; no duplicate monitor or privileged cleanup step is added. Local tests exercise URL/key rejection, exact public `apikey` headers, read-only query/response shape, body-size/deadline bounds, bounded retries and redacted failures. They cannot determine whether repository secrets exist or whether a hosted project is reachable.
+
+An authorized operator must privately confirm the two named repository secrets, inspect the deployed health relation/RLS and manually dispatch the workflow on the intended default branch. Record the run URL, timestamp, commit and actual outcome. Do not paste secret values or raw error bodies into public issues. If it fails, inspect Dashboard project state, relation/grants and key format privately; a paused project requires an authorized manual recovery, not repeated unbounded requests.
+
+The broader `node scripts/validateQuietReadiness.mjs` command reuses the same real health helper, then performs bounded read-only Corner probes. It is an operator readiness aid, not a second schedule or successful real-service claim. Daily privileged retention belongs exclusively to the separate reviewed database Cron setup in [Quiet Corner operations](quiet-corner-moderation.md#v16-operator-checklist-and-daily-schedule).
+
+尚未取得這次操作所需的遠端設定，因此不能確認 Actions secrets、手動執行成功或專案活動狀態。請由授權操作人員私人核對 secrets、遠端 health relation／RLS，手動執行現有工作流程並記錄真正的 run URL 與結果。V1.6 沒有新增重複排程，也沒有把清理權限加入這個唯讀健康檢查。
