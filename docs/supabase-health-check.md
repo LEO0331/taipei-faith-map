@@ -58,3 +58,11 @@ An authorized operator must privately confirm the two named repository secrets, 
 The broader `node scripts/validateQuietReadiness.mjs` command reuses the same real health helper, then performs bounded read-only Corner probes. It is an operator readiness aid, not a second schedule or successful real-service claim. Daily privileged retention belongs exclusively to the separate reviewed database Cron setup in [Quiet Corner operations](quiet-corner-moderation.md#v16-operator-checklist-and-daily-schedule).
 
 尚未取得這次操作所需的遠端設定，因此不能確認 Actions secrets、手動執行成功或專案活動狀態。請由授權操作人員私人核對 secrets、遠端 health relation／RLS，手動執行現有工作流程並記錄真正的 run URL 與結果。V1.6 沒有新增重複排程，也沒有把清理權限加入這個唯讀健康檢查。
+
+## V2.0 observed GitHub Actions result
+
+The V1.6 handoff above remains historical. On 2026-11-06 the operator supplied [run 42144704285](https://github.com/LEO0331/taipei-faith-map/actions/runs/42144704285) after repository configuration. Job metadata confirms `database-read` and its read-only health step completed with `success`. Logs confirm `main` commit `9052d77432b3e223f43e40e74db4ced61d797276`, Node 22.23.4 and the actual helper command, with success at **01:34:18 UTC / 09:34:18 Asia/Taipei**. The URL/key inputs were masked; no secret values were retrieved. The helper/workflow at that commit match this workstream's versions.
+
+This verifies a real Actions database health query with usable configured inputs, separately from offline tests and the earlier direct hosted query. Automatic cron firings, future availability and Auth/Realtime/Edge readiness are not established by this one success. The existing three-times-daily schedule is unchanged. See [V2.0 evidence](release-v2.0.md).
+
+繁體中文：已讀取上述 run 的工作狀態與日誌，確認健康步驟在臺北時間 2026-11-06 09:34 成功；不是僅確認工作流程存在。此結果不代表之後每次自動排程、匿名登入、Realtime 或投稿均已驗證。
