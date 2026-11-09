@@ -68,6 +68,33 @@ function openBangkaStory() {
 }
 
 describe('Heritage discovery integration', () => {
+  it('returns from route-linked history to the same stop and invoking control after a language change', async () => {
+    const { container } = render(<App />);
+    await screen.findByRole('heading', { name: lungshan.name });
+    navigate('散步路線');
+    fireEvent.click(await screen.findByRole('button', { name: `選擇路線: ${linkedRoute.title.zh}` }));
+    fireEvent.click(screen.getByRole('button', { name: '下一站' }));
+    const stopId = map().getAttribute('data-selected-stop');
+    const opener = await waitFor(() => {
+      const button = container.querySelector<HTMLButtonElement>(`[data-route-history="${linkedRoute.id}"]`);
+      expect(button).not.toBeNull();
+      return button!;
+    });
+    opener.focus();
+    fireEvent.click(opener);
+    await screen.findByRole('heading', { name: story.title.zh });
+    fireEvent.click(screen.getByRole('button', { name: '開始閱讀章節' }));
+    fireEvent.click(screen.getByRole('button', { name: 'English' }));
+    expect(screen.getByRole('heading', { name: story.chapters[0].title.en })).toBeTruthy();
+    fireEvent.click(screen.getByRole('button', { name: 'View current registered location' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Return to History & Stories' }));
+    expect(screen.getByRole('heading', { name: story.chapters[0].title.en })).toBeTruthy();
+    fireEvent.click(screen.getByRole('button', { name: 'Return to the walking route' }));
+    expect(map().getAttribute('data-selected-stop')).toBe(stopId);
+    expect(screen.getByRole('heading', { name: linkedRoute.title.en })).toBeTruthy();
+    await waitFor(() => expect(container.querySelector(`[data-route-history="${linkedRoute.id}"]`)).toBe(document.activeElement));
+  });
+
   it('browses history without moving the map, requests current-location highlights explicitly and restores timeline focus and filters', async () => {
     render(<App />);
     await screen.findByRole('heading', { name: lungshan.name });

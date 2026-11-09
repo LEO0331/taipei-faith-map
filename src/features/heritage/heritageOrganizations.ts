@@ -1,5 +1,6 @@
 import type { HeritagePlaceReference } from './heritageTypes';
 import { heritageSources } from './historicalMilestones';
+import { neighborhoodHistories } from './neighborhoodHistories';
 
 /** These are present-day registration matches, never a historical-coordinate layer. */
 export const heritageOrganizations: HeritagePlaceReference[] = [
@@ -28,4 +29,5 @@ export const heritageOrganizations: HeritagePlaceReference[] = [
     relationship: { zh: '新生南路的目前登記場所，可連結現址建築與古蹟指定記錄；不作為麗水街舊址座標。', en: 'The present Xinsheng South Road registration associated with building and designation records; it is not used as coordinates for the earlier Lishui Street site.' },
     sources: [heritageSources.mosqueHistory, heritageSources.mosqueHeritage],
   },
+  ...neighborhoodHistories.places,
 ];

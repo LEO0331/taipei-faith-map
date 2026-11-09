@@ -10,6 +10,7 @@ import { culturalEvents } from './features/religious-calendar/culturalEvents';
 import { culturalRoutes } from './features/cultural-routes/culturalRoutes';
 import { historicalMilestones } from './features/heritage/historicalMilestones';
 import { heritageStories } from './features/heritage/heritageStories';
+import { heritageOrganizations } from './features/heritage/heritageOrganizations';
 
 const lifecycle = vi.hoisted(() => ({ mounted: 0, unmounted: 0 }));
 type MapProps = {
@@ -35,7 +36,11 @@ vi.mock('./components/ReligiousOrganizationMap', async () => {
   };
 });
 
-const ids = new Set(placeProfiles.map(profile => profile.organizationId));
+const ids = new Set([
+  ...placeProfiles.map(profile => profile.organizationId),
+  ...heritageOrganizations.map(place => place.organizationId),
+  ...culturalRoutes.flatMap(route => route.stops.map(stop => stop.organizationId)),
+]);
 const organizations = (governmentData as ReligiousOrganization[]).filter(organization => ids.has(organization.id));
 const qingshan = organizations.find(organization => organization.id === 'org-21-1bs6r0m')!;
 const lungshan = organizations.find(organization => organization.id === 'org-83-1arg2kq')!;

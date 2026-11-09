@@ -1,5 +1,6 @@
 import type { HeritageStory } from './heritageTypes';
 import { heritageReviewDate, heritageSources } from './historicalMilestones';
+import { neighborhoodHistories } from './neighborhoodHistories';
 
 /** Reading sequences connect documented topics, not an invented shared historical cause. */
 export const heritageStories: HeritageStory[] = [
@@ -86,4 +87,5 @@ export const heritageStories: HeritageStory[] = [
     sources: [heritageSources.zhongshanHistory, heritageSources.zhongshanHeritage, heritageSources.mosqueHistory, heritageSources.mosqueHeritage],
     lastReviewed: heritageReviewDate, editorialReviewStatus: 'internal-reviewed',
   },
+  ...neighborhoodHistories.stories,
 ];

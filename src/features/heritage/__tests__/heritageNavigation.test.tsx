@@ -157,12 +157,15 @@ describe('heritage timeline and stories', () => {
     await waitFor(() => expect(document.activeElement).toBe(screen.getByRole('button', { name: 'Read story: A story from sources' })));
   });
 
-  it('allows a chapter to reveal its canonical milestone in the timeline', () => {
+  it('returns from a chapter milestone to the same reading position and control', async () => {
     render(<HeritageExplorer {...props} />);
     click('Heritage Stories'); click('Read story: A story from sources'); click('Start chapters');
     click('Read on the timeline: Unmapped historical context');
     expect(screen.getByRole('heading', { name: 'Historical Timeline' })).toBeTruthy();
     expect(screen.getByRole('button', { name: 'Unmapped historical context' }).getAttribute('aria-pressed')).toBe('true');
+    click('Return to reading chapter');
+    expect(screen.getByRole('status').textContent).toBe('Chapter 1 of 3');
+    await waitFor(() => expect(document.activeElement).toBe(screen.getByRole('button', { name: 'Read on the timeline: Unmapped historical context' })));
   });
 
   it('withholds invalid evidence rather than presenting unsafe history or navigation actions', () => {

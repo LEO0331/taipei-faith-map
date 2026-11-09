@@ -41,6 +41,7 @@ export type HeritageStory = {
   title: LocalizedText;
   subtitle: LocalizedText;
   introduction: LocalizedText;
+  conclusion?: LocalizedText;
   theme: 'architecture' | 'community' | 'history' | 'multi-faith';
   chapters: HeritageChapter[];
   sources: SourceReference[];
