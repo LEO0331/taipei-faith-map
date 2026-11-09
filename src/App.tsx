@@ -69,6 +69,8 @@ export function App() {
   const heritageReturn = useRef<HeritageReturnContext | undefined>(undefined);
   const [hasHeritageReturn, setHasHeritageReturn] = useState(false);
   const [heritageRouteError, setHeritageRouteError] = useState(false);
+  const [routeStoryOrigin, setRouteStoryOrigin] = useState<{ route: ResolvedCulturalRoute; stopId?: string; control: HTMLElement | null }>();
+  const [routeStoryTargets, setRouteStoryTargets] = useState<ReadonlyMap<string, RelatedCulturalTarget>>(new Map());
   const heritageRouteRequest = useRef(0);
   const focusSequence = useRef(0);
   const workspaceRef = useRef<HTMLElement>(null);
@@ -80,6 +82,56 @@ export function App() {
     setSelectedRoute(route);
     setSelectedRouteStopId(route?.organizations[0]?.id);
   }, []);
+  const historyRouteIds = useMemo(() => new Set(routeStoryTargets.keys()), [routeStoryTargets]);
+  useEffect(() => {
+    if (mode !== 'routes') return;
+    let active = true;
+    Promise.all([import('./features/heritage/heritageLookup'), import('./features/cultural-routes/routeLookup')])
+      .then(([{ getAvailableHeritage }, { getAvailableRoutes }]) => {
+        if (!active) return;
+        const targets = new Map<string, RelatedCulturalTarget>();
+        const { stories } = getAvailableHeritage(organizations);
+        for (const { route, organizations: stops } of getAvailableRoutes(organizations)) {
+          for (const story of stories) {
+            if (!story.routeIds?.includes(route.id)) continue;
+            const place = stops.find(stop => story.chapters.some(chapter => chapter.organizationIds.includes(stop.id)));
+            if (!place) continue;
+            targets.set(route.id, { kind: 'story', id: story.id, organizationId: place.id });
+            break;
+          }
+        }
+        setRouteStoryTargets(targets);
+      }).catch(() => { if (active) setRouteStoryTargets(new Map()); });
+    return () => { active = false; };
+  }, [mode, organizations]);
+  const openRouteHistory = (route: ResolvedCulturalRoute) => {
+    const target = routeStoryTargets.get(route.route.id);
+    if (!target) return;
+    const control = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+    setRouteStoryOrigin({ route, stopId: selectedRouteStopId, control });
+    setRelatedSelection({ target, token: ++relatedSequence.current });
+    setVisited(current => ({ ...current, heritage: true }));
+    setMode('heritage');
+  };
+  const returnToRouteStory = useCallback(() => {
+    if (!routeStoryOrigin) return;
+    setRelatedSelection(undefined);
+    setRouteStoryOrigin(undefined);
+    setSelectedRoute(routeStoryOrigin.route);
+    setSelectedRouteStopId(routeStoryOrigin.stopId);
+    heritageReturn.current = undefined;
+    setHasHeritageReturn(false);
+    setFocusRequest(undefined);
+    setMode('routes');
+    requestAnimationFrame(() => {
+      const control = routeStoryOrigin.control;
+      if (control?.isConnected) { control.focus(); return; }
+      const guide = routeGuideRef.current;
+      const replacement = [...(guide?.querySelectorAll<HTMLElement>('[data-route-history]') ?? [])]
+        .find(button => button.dataset.routeHistory === routeStoryOrigin.route.route.id);
+      (replacement ?? guide?.querySelector<HTMLElement>('.route-title'))?.focus();
+    });
+  }, [routeStoryOrigin]);
   const returnToHeritage = useCallback(() => {
     const context = heritageReturn.current;
     heritageReturn.current = undefined;
@@ -99,19 +151,21 @@ export function App() {
     });
   }, []);
   const navigate = useCallback((nextMode: ExplorationMode) => {
+    if (nextMode === 'heritage' && heritageReturn.current) { returnToHeritage(); return; }
+    if (nextMode === 'routes' && routeStoryOrigin) { returnToRouteStory(); return; }
+    setRouteStoryOrigin(undefined);
     ++relatedSequence.current;
     relatedOrigin.current = undefined;
     setHasRelatedReturn(false); setRelatedSelection(undefined);
     ++heritageRouteRequest.current;
     setHeritageRouteError(false);
-    if (nextMode === 'heritage' && heritageReturn.current) { returnToHeritage(); return; }
     if (heritageReturn.current) setFocusRequest(undefined);
     heritageReturn.current = undefined;
     setHasHeritageReturn(false);
     setMode(nextMode);
     if (nextMode !== 'map') setFocusRequest(undefined);
     if (nextMode !== 'map') setVisited(current => ({ ...current, [nextMode]: true }));
-  }, [returnToHeritage]);
+  }, [returnToHeritage, returnToRouteStory, routeStoryOrigin]);
   const viewOnMap = useCallback((organization: ReligiousOrganization) => {
     setMode('map');
     setFocusRequest({ organization, token: ++focusSequence.current, ...(relatedOrigin.current ? { temporary: true, historical: false } : {}) });
@@ -127,6 +181,7 @@ export function App() {
     requestAnimationFrame(() => mapPanelRef.current?.scrollIntoView?.({ block: 'start' }));
   }, []);
   const openHeritageRoute = useCallback(async (routeId: string) => {
+    if (routeStoryOrigin?.route.route.id === routeId) { returnToRouteStory(); return; }
     const request = ++heritageRouteRequest.current;
     const control = document.activeElement instanceof HTMLElement ? document.activeElement : null;
     setHeritageRouteError(false);
@@ -141,7 +196,7 @@ export function App() {
       setVisited(current => ({ ...current, routes: true }));
       setMode('routes');
     } catch { if (request === heritageRouteRequest.current) setHeritageRouteError(true); }
-  }, [organizations, selectedRoute, selectedRouteStopId, selectRoute]);
+  }, [organizations, selectedRoute, selectedRouteStopId, selectRoute, routeStoryOrigin, returnToRouteStory]);
   const returnFocus = useRef<(() => void) | undefined>(undefined);
   const returnAction = useRef<'explore' | 'profile'>('explore');
   const openFaithSpace = useCallback((organization: ReligiousOrganization, restoreFocus?: () => void, panel: 'scene' | 'place' = 'scene') => {
@@ -342,11 +397,12 @@ export function App() {
           <button className="text-button" onClick={returnToHeritage}>{discovery.returnHeritage}</button>
         </div>}
         {visited.heritage && <div hidden={mode !== 'heritage'} className="heritage-workspace" ref={heritageGuideRef}>
+          {routeStoryOrigin && <div className="heritage-return-banner"><button className="text-button" onClick={returnToRouteStory}>{language === 'zh' ? '返回原本的散步路線' : 'Return to the walking route'}</button></div>}
           {heritageRouteError && <p role="alert">{discovery.routeUnavailable}</p>}
           <ExplorationBoundary language={language} onReturnMap={() => navigate('map')}>
             <Suspense fallback={<p role="status">{discovery.loading}</p>}><HeritageExplorer organizations={organizations} language={language}
               onViewMap={viewHeritagePlaces} onExplore={openFaithSpace} onOpenProfile={organization => openFaithSpace(organization, undefined, 'place')}
-              onOpenRoute={openHeritageRoute} relatedSelection={relatedSelection} onReturnRelated={returnToPlace} /></Suspense>
+              onOpenRoute={openHeritageRoute} relatedSelection={relatedSelection} onReturnRelated={routeStoryOrigin ? returnToRouteStory : returnToPlace} /></Suspense>
           </ExplorationBoundary>
         </div>}
         {visited.calendar && <div hidden={mode !== 'calendar'} className="calendar-workspace">
@@ -374,7 +430,8 @@ export function App() {
             <ExplorationBoundary language={language} onReturnMap={() => navigate('map')}>
               <Suspense fallback={<p role="status">{discovery.loading}</p>}><CulturalRoutes organizations={organizations} language={language}
                 selectedRoute={selectedRoute} selectedStopId={selectedRouteStopId} onSelectRoute={selectRoute} onSelectStop={setSelectedRouteStopId}
-                onExplore={openFaithSpace} onExit={exitRoute} /></Suspense>
+                onExplore={openFaithSpace} onExit={exitRoute} historyRouteIds={historyRouteIds}
+                onOpenHistory={!hasRelatedReturn && !hasHeritageReturn ? openRouteHistory : undefined} /></Suspense>
             </ExplorationBoundary>
           </div>}
           </div>
@@ -430,7 +487,7 @@ export function App() {
     </Suspense></QuietGardenBoundary>}
     {selectedOrganization && <FaithSpaceBoundary language={language} onClose={closeFaithSpace}><Suspense fallback={<FaithSpaceStatus language={language} onClose={closeFaithSpace} />}>
       <FaithSpaceModal organization={selectedOrganization} language={language} onLanguageChange={handleLanguageChange} onClose={closeFaithSpace} initialPanel={faithSpacePanel}
-        organizations={organizations} onNavigateRelated={hasRelatedReturn ? undefined : openRelatedContent} />
+        organizations={organizations} onNavigateRelated={hasRelatedReturn || routeStoryOrigin ? undefined : openRelatedContent} />
     </Suspense></FaithSpaceBoundary>}
     </>
   );

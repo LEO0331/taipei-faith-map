@@ -94,6 +94,7 @@ export function validateHeritageContent(data: HeritageContent, organizations: Re
     if (seenStories.has(story.id)) errors.push(`${path}: duplicate story ID`);
     seenStories.add(story.id);
     for (const field of ['title', 'subtitle', 'introduction'] as const) checkLocalized(story[field], `${path}.${field}`, errors);
+    if (story.conclusion !== undefined) checkLocalized(story.conclusion, `${path}.conclusion`, errors);
     for (const language of ['zh', 'en'] as const) {
       if (!nonempty(story.title?.[language])) continue;
       const key = `${language}:${normalized(story.title[language])}`;

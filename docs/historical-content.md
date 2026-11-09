@@ -128,3 +128,19 @@ A place profile's compact related-content section can lead to an existing milest
 `npm run content:audit` 現在將歷史日期、里程碑、故事、章節引用與現址對照一併檢查，沿用既有驗證工具，報告缺漏／重複引用、身分不一致、雙語／來源資料錯誤與編輯狀態。一般來源365日的提醒是重新查核證據的工作提示，不表示歷史敘述滿一年就成為錯誤。2026-11-05的新場所介紹核對日期，不會自動取代歷史內容2026-11-04的既有資訊。
 
 場所介紹的精簡延伸內容可連到已驗證身分相符的既有史事或故事，再返回原介紹。連結各視圖時仍需區分現址座標、歷史與當代活動日期。詳見[稽核指南](content-audit.md)及[外部文化審閱程序](cultural-review-workflow.md)。外部審閱、實機／螢幕閱讀器評估與歷史媒體授權是不同工作，不能從離線稽核推定已完成。
+
+## V2.1 neighborhood histories / 街區沿革
+
+The 2026-11-09 internal review adds two three-chapter stories and eight milestones. The Dadaocheng story follows the temple completed in 1859, the post office move in 1903, the congregation establishment on 1935-05-05 and the municipal designation announcement on 2018-05-16. The Songshan story reads the temple completion in 1757, entrance lions dated to 1803, the 1920 name change and the Fude Temple rebuilding after road widening in 1982.
+
+| Story and evidence | Review scope |
+| --- | --- |
+| Dadaocheng, [Xia-Hai festival record](https://tcmb.culture.tw/zh-tw/detail?id=20100726000001&indexCode=BOCH_CountryCulture_51) and [current site](https://tcmb.culture.tw/zh-tw/detail?id=292346&indexCode=Culture_Object) | Bureau of Cultural Heritage and National Taipei University of Technology. The milestone dates completion at the Dadaocheng site. The earlier Bangka site remains unmapped. |
+| Dadaocheng, [former post office and Lee Memorial Church](https://taiwangods.moi.gov.tw/Religious_Culture/html/Cultural/3_0011.aspx?i=356) and [church directory](https://www.pct.org.tw/churchdata.aspx?strOrgNo=C03001) | Ministry of the Interior and Presbyterian Church in Taiwan. The story separates the office move, congregation establishment and designation. The directory's 1900 promotion field is omitted. The Dadaocheng Presbyterian Church on Ganzhou Street is a distinct registration. |
+| Songshan, [ministry guide](https://taiwangods.moi.gov.tw/Religious_Culture/html/landscape/1_0011.aspx?i=2), [Ciyou district history](https://tcmb.culture.tw/zh-tw/detail?id=292304&indexCode=Culture_Place) and [Fude district history](https://tcmb.culture.tw/zh-tw/detail?id=292340&indexCode=Culture_Place) | Ministry of the Interior and Songshan district office/community college gazetteer team. The district record separates 1753 building activity from 1757 completion, which the ministry also records. The 1803 year refers to the stone lions. The 1982 Fude record refers to rebuilding. |
+
+All four map references were matched by ID, registered name, district and address against the current JSON, with numeric in-range coordinates. The current coordinates do not reconstruct past riverbanks, buildings or street boundaries. The sources support the individual place histories. Their comparison and reading order are editorial choices. The bilingual conclusions summarize those distinctions. No photographs or external review endorsements are included.
+
+V2.1 新增「大稻埕兩條街，兩段場所史」及「從錫口讀松山」兩篇三章故事，共八則史事，於 2026-11-09 內部核對。大稻埕篇區分廟宇落成、郵電支局遷入、堂會設立與古蹟指定。松山篇區分廟宇完工、石獅年代、地名變遷與拓路後重建。四處現址逐筆與登記資料核對，地圖連結僅標示目前登記位置。來源及核對範圍見上表。
+
+Stories show chapter counts on the overview and links to safely resolved routes throughout reading. A chapter can open its milestone in the timeline and return to the same chapter and invoking control. The return restores the timeline filter and selection that existed before the detour.

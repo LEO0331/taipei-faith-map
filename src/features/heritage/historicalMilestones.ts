@@ -1,5 +1,6 @@
 import type { SourceReference } from '../faith-spaces/placeProfileTypes';
 import type { HistoricalMilestone } from './heritageTypes';
+import { neighborhoodHistories } from './neighborhoodHistories';
 
 export const heritageReviewDate = '2026-11-04';
 const source = (id: string, zh: string, en: string, url: string, publisher: string): SourceReference => ({
@@ -29,6 +30,7 @@ const bangka = 'bangka-building-layers';
 const buildings = 'buildings-and-communities';
 
 export const historicalMilestones: HistoricalMilestone[] = [
+  ...neighborhoodHistories.milestones,
   {
     id: 'lungshan-foundation-1738',
     title: { zh: '龍山寺的創建記錄', en: 'Lungshan Temple’s documented founding' },

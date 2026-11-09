@@ -59,6 +59,9 @@
 .heritage-chapter-milestones > article { border-top: 1px solid #dcd4c7; padding-top: 20px; margin-top: 20px; }
 .heritage-chapter-milestones h6 { font-size: 21px; font-weight: 600; line-height: 1.5; margin: 8px 0; }
 .heritage-story-actions { border-top: 1px solid #dcd4c7; padding-top: 20px; margin-bottom: 0; }
+.heritage-chapter-return { margin-block: 0 14px; }
+.heritage-related-routes { margin-block: 16px; }
+.heritage-related-routes button { max-width: 100%; text-align: start; overflow-wrap: anywhere; }
 @media (max-width: 800px) { .heritage-timeline-layout { grid-template-columns: minmax(0, 1fr); gap: 20px; } .heritage-filters { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 @media (max-width: 480px) { .heritage-filters { grid-template-columns: minmax(0, 1fr); } .heritage-view-navigation > button { flex: 1 1 auto; font-size: 13px; } .heritage-story-heading { display: block; } .heritage-story-heading > button { margin-bottom: 16px; } .heritage-step-actions > button, .heritage-story-actions > button { flex: 1 1 auto; } .heritage-place-actions > button { flex: 1 1 100%; text-align: left; } .heritage-story-card { padding: 18px; } }
 @media (prefers-reduced-motion: reduce) { .heritage-explorer *, .heritage-explorer *::before, .heritage-explorer *::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; } }
