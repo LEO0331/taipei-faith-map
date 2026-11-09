@@ -82,7 +82,7 @@ describe('first-minute exploration', () => {
     expect(screen.getByRole('region', { name: '從這裡開始' })).toBeTruthy();
     expect(screen.queryByRole('dialog')).toBeNull();
     fireEvent.click(screen.getByRole('button', { name: 'English' }));
-    expect(screen.getByText('Discover Taipei’s faith and culture, explore at your own pace, or simply stay for a moment.')).toBeTruthy();
+    expect(screen.getByText('Explore slowly. Notice deeply.')).toBeTruthy();
     const mapLink = screen.getByRole('link', { name: 'Browse the map' });
     expect(mapLink.getAttribute('href')).toBe('#faith-main-map');
     fireEvent.click(mapLink);

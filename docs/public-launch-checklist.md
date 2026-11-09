@@ -121,3 +121,7 @@ The owner has now expressly requested a Garden-only ordinary-browser pilot despi
 - Still prohibited by this authorization: Corner/posting activation, security bypass, fake visitors or claiming full readiness. If the pilot fails, retain evidence and roll the Presence flag back through a reviewed build.
 
 Operator test: normal Chrome/Edge profile A joins after real verification; independent profile B does the same; each sees one other visitor; wave/sit/acknowledgement, leave/background cleanup and close/focus return are observed. Record errors by stage without credentials or tokens. No scripted challenge solving is required or permitted.
+
+## V2.1 demonstration check — 2026-11-09
+
+The existing public Pages deployment returned its manifest and icons, opened a Faith Space and exposed the Garden-only pilot. Opening and closing the Garden restored focus and generated zero Auth or CAPTCHA requests. Quiet Corner was absent. The V2.1 cultural journey is tested separately on the review build. See [V2.1 verification](release-v2.1.md) for scope and outstanding checks.

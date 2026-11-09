@@ -72,3 +72,7 @@ The final offline checks passed: **229 tests in 35 files**, the production build
 V1.4修改前量得初始 JavaScript 為 **542.13 kB／gzip 168.94 kB**。最終應以相同建置設定的實際輸出比較，不從延遲載入模組數量推估改善。`axe-core` 僅供開發測試，不加入正式應用程式；[無障礙紀錄](accessibility-review.md)另外標示 DOM 檢查與尚未完成的瀏覽器、對比、實機及螢幕閱讀器驗證。
 
 相同 GitHub Pages 設定下，本版最終初始 JavaScript 為 **546.16 kB／gzip 170.09 kB**，增加 **4.03 kB／gzip 1.15 kB**；這是新增導覽與無障礙行為的實際大小，並非速度改善宣稱。其餘場所內容與相關目錄仍按需載入，稽核工具與 axe 不進入正式介面。未建立執行時間瓶頸或速度基準，因此保留原渲染架構；既有 500 kB 建置提醒仍存在。**35個測試檔案、229項測試**、型別檢查、正式建置及內容稽核成功；六項 axe 測試涵蓋十一個介面狀態，但不包含實際對比與輔助科技驗證。
+
+## Monthly workflow
+
+V2.1c reuses the structural and URL checks in a dedicated monthly review. Read the report's retrieval status before interpreting any comparison. A timeout or 403 calls for a later source check. Compare changed facts with the actual publication and confirm identities before making an editorial change. Review dates record human verification. See [monthly maintenance](monthly-content-maintenance.md).

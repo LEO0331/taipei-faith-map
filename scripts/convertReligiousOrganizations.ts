@@ -40,7 +40,47 @@ const DEFAULT_SOURCE_PATH = '/Users/Leo/Downloads/臺北市已立案宗教團體
 export function convertReligiousOrganizations(sourceArg?: string): ConversionReport {
   const sourcePath = resolve(sourceArg ?? DEFAULT_SOURCE_PATH);
   const outputDir = resolve('public/data');
-  const { sheetName, rows } = readOdsSheet(sourcePath);
+  const { sheetName, organizations, inputRows, skippedRows } = parseReligiousOrganizationsOds(readFileSync(sourcePath));
+  const summary = buildSummary(organizations);
+  const report: ConversionReport = {
+    sourceFile: basename(sourcePath),
+    sheetName,
+    generatedAt: new Date().toISOString(),
+    inputRows,
+    outputRows: organizations.length,
+    skippedRows,
+    coordinateOutliers: organizations
+      .filter((item) => item.isCoordinateOutlier)
+      .map((item) => ({
+        id: item.id,
+        name: item.name,
+        longitude: item.longitude,
+        latitude: item.latitude,
+      })),
+    taipeiBounds: TAIPEI_BOUNDS,
+    notes: [
+      'Coordinates were converted from TWD97 / TM2 (EPSG:3826) to WGS84 for Leaflet.',
+      'Blank religion values were normalized to 未分類.',
+      '負責人 was intentionally excluded from generated public JSON.',
+      'Festival date text is split on | and kept in its original lunar-calendar wording.',
+    ],
+  };
+
+  mkdirSync(outputDir, { recursive: true });
+  writeJson('religious-organizations.json', organizations, outputDir);
+  writeJson('religious-summary.json', summary, outputDir);
+  writeJson('conversion-report.json', report, outputDir);
+
+  return report;
+}
+
+/** Convert the known ODS schema without writing any files. */
+export function parseReligiousOrganizationsOds(contents: Buffer) {
+  const { sheetName, rows, headers } = readOdsSheet(contents);
+  const required = ['寺廟名稱', '行政區', '地址', 'X座標', 'Y座標', '教別', '祭典日期'];
+  if (!required.every(header => headers.includes(header)) || new Set(headers).size !== headers.length) {
+    throw new Error('Unexpected government spreadsheet columns.');
+  }
   const skippedRows: ConversionReport['skippedRows'] = [];
   const organizations: ReligiousOrganization[] = [];
 
@@ -87,37 +127,7 @@ export function convertReligiousOrganizations(sourceArg?: string): ConversionRep
     });
   });
 
-  const summary = buildSummary(organizations);
-  const report: ConversionReport = {
-    sourceFile: basename(sourcePath),
-    sheetName,
-    generatedAt: new Date().toISOString(),
-    inputRows: rows.length,
-    outputRows: organizations.length,
-    skippedRows,
-    coordinateOutliers: organizations
-      .filter((item) => item.isCoordinateOutlier)
-      .map((item) => ({
-        id: item.id,
-        name: item.name,
-        longitude: item.longitude,
-        latitude: item.latitude,
-      })),
-    taipeiBounds: TAIPEI_BOUNDS,
-    notes: [
-      'Coordinates were converted from TWD97 / TM2 (EPSG:3826) to WGS84 for Leaflet.',
-      'Blank religion values were normalized to 未分類.',
-      '負責人 was intentionally excluded from generated public JSON.',
-      'Festival date text is split on | and kept in its original lunar-calendar wording.',
-    ],
-  };
-
-  mkdirSync(outputDir, { recursive: true });
-  writeJson('religious-organizations.json', organizations, outputDir);
-  writeJson('religious-summary.json', summary, outputDir);
-  writeJson('conversion-report.json', report, outputDir);
-
-  return report;
+  return { sheetName, organizations, inputRows: rows.length, skippedRows };
 }
 
 if (process.argv[1] === fileURLToPath(import.meta.url)) {
@@ -147,8 +157,10 @@ function writeJson(filename: string, data: unknown, outputDir: string): void {
   writeFileSync(resolve(outputDir, filename), `${JSON.stringify(data, null, 2)}\n`, 'utf8');
 }
 
-function readOdsSheet(filePath: string): { sheetName: string; rows: RawRow[] } {
-  const contentXml = extractZipEntry(readFileSync(filePath), 'content.xml').toString('utf8');
+function readOdsSheet(contents: Buffer): { sheetName: string; rows: RawRow[]; headers: string[] } {
+  const mimetype = extractZipEntry(contents, 'mimetype').toString('utf8');
+  if (mimetype !== 'application/vnd.oasis.opendocument.spreadsheet') throw new Error('Unexpected spreadsheet file type.');
+  const contentXml = extractZipEntry(contents, 'content.xml').toString('utf8');
   const tableMatch = contentXml.match(/<table:table\b([^>]*)>([\s\S]*?)<\/table:table>/);
   if (!tableMatch) {
     throw new Error('ODS file does not contain a table.');
@@ -165,7 +177,8 @@ function readOdsSheet(filePath: string): { sheetName: string; rows: RawRow[] } {
     const repeatedRows = Number(getXmlAttribute(rowAttrs, 'table:number-rows-repeated') ?? '1');
 
     if (!headers) {
-      const candidateHeaders = cells.map((cell) => cell.trim()).filter(Boolean);
+      const candidateHeaders = cells.map((cell) => cell.trim());
+      while (candidateHeaders.at(-1) === '') candidateHeaders.pop();
       if (candidateHeaders.length === 0) continue;
       headers = candidateHeaders;
       continue;
@@ -174,13 +187,14 @@ function readOdsSheet(filePath: string): { sheetName: string; rows: RawRow[] } {
     if (cells.every((cell) => cell.trim().length === 0)) continue;
 
     const row = Object.fromEntries(headers.map((header, index) => [header, cells[index] ?? '']));
-    const repeatCount = Number.isFinite(repeatedRows) && repeatedRows > 0 ? repeatedRows : 1;
+    const repeatCount = Number.isSafeInteger(repeatedRows) && repeatedRows > 0 ? repeatedRows : 1;
+    if (parsedRows.length + repeatCount > 10000) throw new Error('Spreadsheet row limit exceeded.');
     for (let index = 0; index < repeatCount; index += 1) {
       parsedRows.push(row);
     }
   }
 
-  return { sheetName, rows: parsedRows };
+  return { sheetName, rows: parsedRows, headers: headers ?? [] };
 }
 
 export function parseOdsCells(rowXml: string, maxColumns: number): string[] {
@@ -219,9 +233,11 @@ function parseOdsCellValue(attrs: string, cellXml: string): string {
 function stripXmlTags(value: string): string {
   return value
     .replace(/<text:line-break\s*\/>/g, '\n')
-    .replace(/<text:s(?:\s+text:c="(\d+)")?\s*\/>/g, (_match, count: string | undefined) =>
-      ' '.repeat(count ? Number(count) : 1),
-    )
+    .replace(/<text:s(?:\s+text:c="(\d+)")?\s*\/>/g, (_match, count: string | undefined) => {
+      const spaces = count ? Number(count) : 1;
+      if (spaces > 256) throw new Error('Spreadsheet whitespace expansion exceeded its limit.');
+      return ' '.repeat(spaces);
+    })
     .replace(/<[^>]+>/g, '');
 }
 
@@ -290,10 +306,14 @@ function readZipEntryData(
   const fileNameLength = zipFile.readUInt16LE(localHeaderOffset + 26);
   const extraLength = zipFile.readUInt16LE(localHeaderOffset + 28);
   const dataStart = localHeaderOffset + 30 + fileNameLength + extraLength;
+  const maxEntryBytes = 8 * 1024 * 1024;
+  if (compressedSize > maxEntryBytes || dataStart + compressedSize > zipFile.length) {
+    throw new Error('Invalid or oversized spreadsheet entry.');
+  }
   const compressedData = zipFile.subarray(dataStart, dataStart + compressedSize);
 
   if (compressionMethod === 0) return compressedData;
-  if (compressionMethod === 8) return inflateRawSync(compressedData);
+  if (compressionMethod === 8) return inflateRawSync(compressedData, { maxOutputLength: maxEntryBytes });
 
   throw new Error(`Unsupported ZIP compression method: ${compressionMethod}.`);
 }

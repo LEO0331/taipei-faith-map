@@ -34,6 +34,19 @@ const labels = {
   en: { welcome: 'Explore a Faith Space', close: 'Close Faith Space', wave: 'Wave', off: 'Animation Off' },
   zh: { welcome: '探索一處信仰空間', close: '關閉信仰空間', wave: '揮揮手', off: '關閉動畫' },
 };
+const discovery = {
+  en: { routes: 'Walking Routes', route: 'Three temple stories in Bangka', next: 'Next stop', chapters: 'Start chapters', milestone: /^Read on the timeline:/, location: 'View current registered location', backHistory: 'Return to History & Stories', backRoute: 'Return to the walking route', calendar: 'Calendar', calendarTitle: 'Religious Calendar', map: 'Map' },
+  zh: { routes: '散步路線', route: '艋舺三處廟宇文化', next: '下一站', chapters: '開始閱讀章節', milestone: /^在時間軸閱讀:/, location: '查看目前登記位置', backHistory: '返回歷史與故事', backRoute: '返回原本的散步路線', calendar: '行事曆', calendarTitle: '宗教文化行事曆', map: '地圖' },
+};
+async function checkDiscoveryAccessibility(page, selector) {
+  const violations = await page.evaluate(async target => {
+    const result = await window.axe.run(document.querySelector(target), {
+      runOnly: { type: 'tag', values: ['wcag2a', 'wcag2aa', 'wcag21aa'] },
+    });
+    return result.violations.map(item => ({ id: item.id, targets: item.nodes.map(node => node.target) }));
+  }, selector);
+  assert.equal(violations.length, 0, JSON.stringify(violations));
+}
 try {
   for (const width of [1280, 768, 390, 375, 320]) for (const language of ['zh', 'en']) {
     const context = await browser.newContext({ viewport: { width, height: 900 }, reducedMotion: width === 375 ? 'reduce' : 'no-preference' });
@@ -87,6 +100,58 @@ try {
       }
       await page.keyboard.press('Escape'); await expect(dialog).toHaveCount(0); await expect(welcome).toBeFocused();
       await expect(page.getByRole('searchbox')).toHaveValue(sample.name);
+      const words = discovery[language];
+      const nav = page.locator('.discovery-navigation');
+      await nav.getByRole('button', { name: words.routes, exact: true }).click();
+      await page.locator('.cultural-route-card').filter({ has: page.getByRole('heading', { name: words.route, exact: true }) }).getByRole('button').click();
+      await page.getByRole('button', { name: words.next, exact: true }).click();
+      const stop = page.locator('.route-stop-detail > h4');
+      const stopTitle = await stop.textContent();
+      const routeSpace = page.locator('.route-stop-detail').getByRole('button', {
+        name: language === 'zh' ? '探索信仰空間' : 'Explore Faith Space', exact: true,
+      });
+      await routeSpace.click();
+      const routeDialog = page.getByRole('dialog');
+      await expect(routeDialog).toBeVisible();
+      await page.keyboard.press('Escape');
+      await expect(routeDialog).toHaveCount(0);
+      await expect(routeSpace).toBeFocused();
+      const history = page.locator('[data-route-history="wanhua-temple-heritage"]');
+      await history.click();
+      await page.getByRole('button', { name: words.chapters, exact: true }).click();
+      if (width === 1280 || width === 320) await checkDiscoveryAccessibility(page, '.heritage-workspace');
+      await page.getByRole('button', { name: words.milestone }).first().click();
+      await page.getByRole('button', { name: words.location, exact: true }).first().click();
+      await page.getByRole('button', { name: words.backHistory, exact: true }).click();
+      await page.getByRole('button', { name: words.backRoute, exact: true }).click();
+      await expect(stop).toHaveText(stopTitle ?? '');
+      await expect(history).toBeFocused();
+      assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), true);
+      if (width === 1280 || width === 320) await checkDiscoveryAccessibility(page, '.cultural-routes');
+      if (width === 320) {
+        await page.evaluate(() => { document.documentElement.style.fontSize = '200%'; });
+        const overflow = await page.evaluate(() => {
+          if (document.documentElement.scrollWidth <= innerWidth) return [];
+          const offenders = [...document.querySelectorAll('body *')]
+            .filter(element => !element.closest('.leaflet-container') && element.getBoundingClientRect().right > innerWidth + 1)
+            .slice(0, 8).map(element => element.getAttribute('class') || element.tagName);
+          return [`document width ${document.documentElement.scrollWidth}`, ...offenders];
+        });
+        assert.deepEqual(overflow, [], 'Route overflows at enlarged root text');
+        await page.evaluate(() => document.documentElement.style.removeProperty('font-size'));
+      }
+      await nav.getByRole('button', { name: words.calendar, exact: true }).click();
+      await expect(page.getByRole('heading', { name: words.calendarTitle, exact: true })).toBeVisible();
+      await nav.getByRole('button', { name: words.map, exact: true }).click();
+      await expect(page.getByRole('searchbox')).toHaveValue(sample.name);
+      if (width === 1280) {
+        await context.setGeolocation({ latitude: sample.latitude, longitude: sample.longitude });
+        await context.grantPermissions(['geolocation'], { origin: new URL(base).origin });
+        await page.getByRole('button', { name: language === 'zh' ? '顯示附近宗教團體' : 'Show nearby religious organizations', exact: true }).click();
+        await expect(page.locator('.nearby-list')).toContainText(sample.name);
+        record('nearby-discovery', { language, location: 'simulated' });
+      }
+      record('route-history-calendar-journey', { width, language });
       assert.equal(optionalRequests.length, 0, 'Solo exploration requested an optional service or SDK');
       record('static-browser-journey', { width, language, reducedMotion: width === 375 });
     } finally { await context.close(); }

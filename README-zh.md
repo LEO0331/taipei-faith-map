@@ -4,9 +4,11 @@
 
 [English README](README.md)
 
-## V2.0 整合狀態
+## 慢慢探索，重新感受。
 
-專用後端、受保護函式、清理工作與健康工作流程已有遠端驗證紀錄。GitHub Variables 已接入 Pages 建置，並有啟用時的設定防線與可重現 Playwright 測試。靜態網站、手機寬度、雙語、鍵盤、PWA 與被動閱讀已通過真實瀏覽器檢查；受測自動化瀏覽器未取得真實 Turnstile token，正向訪客／雙人同步／投稿尚未驗證。擁有者後續已授權**僅庭院的真人驗證試行**：此工作流程在擁有者審閱合併後提供明確加入入口，保留 CAPTCHA／JWT／私有頻道限制。留言角落與資料庫投稿仍關閉。詳見[目前證據](docs/release-v2.0.md)與[上線狀態](docs/public-launch-checklist.md)。
+從地圖找到一處場所，探索文化示意場景、沿散步路線觀察細節，或讀一段有來源的歷史。V2.1 新增松山、大安路線，以及大稻埕、松山故事。從路線閱讀史料後，可回到原本的站點。每月監測將來源變化整理給編輯者審閱。見 [V2.1 驗證紀錄](docs/release-v2.1.md)、[設計理念](docs/design-philosophy.md)與[維護指南](docs/monthly-content-maintenance.md)。
+
+目前公開網站提供庭院試行入口，訪客自行選擇加入。留言角落及投稿仍不在這次試行範圍。V2.1 變更待審閱。見[展示指南](docs/demo-guide.md)、[目前上線檢查](docs/public-launch-checklist.md)與 [V2.0 歷史紀錄](docs/release-v2.0.md)。
 
 `npm ci` 後，可用下列 PowerShell 指令重現靜態真實瀏覽器測試：
 

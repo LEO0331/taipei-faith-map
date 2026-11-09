@@ -51,3 +51,25 @@ For the two-browser recheck, use independent sessions, complete each genuine cha
 ## Owner-authorized Garden pilot update
 
 After the reviewed Garden-only pilot is merged and deployed, the public Garden entry may be used for ordinary-browser testing. Keep the demo description honest: CAPTCHA and anonymous join still need human verification, other avatars must be actual connected test sessions, and Corner/posting remain disabled. Record outcomes before presenting companionship as fully verified; a failed challenge is a service fallback demonstration, not a reason to add fake peers or bypass protection.
+
+## V2.1 portfolio overview
+
+Taipei Faith Map helps visitors turn a directory of registered organizations into a cultural visit they can understand. The static bilingual app connects Leaflet map records, original Faith Space illustrations, curated route stops and source-backed historical chapters. Visitors control their pace and can return to the same stop or map filter. Registration identities are matched exactly to the current dataset, and historical claims carry publisher links and review dates. Internal fact-checking describes the editorial process. The project is independent and carries no formal government or community designation.
+
+### Quick demo · about 60 seconds
+
+1. Open **Walking Routes** and choose **Three temple stories in Bangka**. Point out the ordered stops and the link to walking directions.
+2. At the Lungshan Temple stop, open **Explore Faith Space**, select one hotspot and read its cultural explanation. Open **About This Place** for one cited fact if time permits.
+3. Close the scene, choose **Read the history behind this route** and read one historical milestone. Use **Return to the walking route** to show that the stop and keyboard focus were preserved.
+
+### Full demo · about 5 minutes
+
+1. Start on the map, search for a place and apply a district filter. Demonstrate nearby discovery only with the presenter’s location permission or an explicitly simulated position.
+2. Open a Faith Space, read a hotspot, try a short Faith Moment and switch its animation off. Show the distinction between the illustration and a verified place profile.
+3. Choose the Bangka route, move through two stops, and open the route’s related story. Read a chapter, open a milestone, then view a current registered location on the map. Return to history and then to the same route stop.
+4. Switch languages during a chapter or route stop. Open the Calendar and distinguish a dated event from an undated reference. Return to the map and check the original search or filter.
+5. Show the shared garden only when the deployed flag and actual session allow it. One visitor can explore the scene and choose a seat. Demonstrate a second visitor only with a genuinely connected independent session. If sharing or verification is unavailable, close the garden and finish the solo walkthrough. Show Quiet Corner only if its live entry and moderation controls are enabled.
+
+These durations are presentation targets. Open the site beforehand and check its deployment and any live demonstration prerequisites. The editorial stop sequence identifies cultural connections, while Google Maps provides walking directions. Current registrations mark present-day locations. Check visiting arrangements with the relevant site before setting out.
+
+繁體中文簡報可依相同步驟進行。約一分鐘依序展示「艋舺路線 → 龍山寺熱點 → 相關故事與史事 → 返回原站」。約五分鐘再加入地圖篩選、附近探索、信仰片刻、雙語切換、時間軸現址與行事曆。共享服務可用時才展示真實連線，單人流程可以獨立完成。
