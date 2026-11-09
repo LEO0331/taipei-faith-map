@@ -5,6 +5,7 @@ import { joinQuietGarden } from './presenceClient';
 import type { GardenConnection } from './presenceClient';
 import type { GardenGesture, PresenceState } from './presenceTypes';
 import { QuietVerificationRequiredError } from '../../services/supabaseClient';
+import GardenScene, { GARDEN_DEFAULT_SEAT, GARDEN_DEFAULT_BENCH } from './GardenScene';
 import './quiet-presence.css';
 
 const labels = {
@@ -12,27 +13,61 @@ const labels = {
   en: { title: 'Quiet Garden', introduction: 'Stay quietly, or exchange a gentle greeting.', enter: 'Enter Quiet Garden', leave: 'Leave shared garden', close: 'Return to exploration', connecting: 'Connecting to the garden…', reconnecting: 'The shared connection is interrupted; waiting briefly to reconnect.', empty: 'No other visitors are connected here right now.', others: 'Other connected visitors', privacy: 'Only temporary neutral gestures are shared, never religions, places, locations or reading history.', idle: 'Rest freely', sit: 'Sit quietly', wave: 'Wave', acknowledge: 'Acknowledge a greeting', pause: 'The shared connection was paused in the background. You may enter again yourself.', unavailable: 'Shared presence is temporarily unavailable. Solo exploration remains available.', disabled: 'Shared companionship is not enabled.' },
 };
 
+const actionMessages = {
+  zh: {
+    gesture: { wave: '你揮了揮手。', sit: '你選了一處坐下。', idle: '你正在自在停留。' },
+    sync: { pending: '正在分享動作…', shared: '動作已送到庭院。', failed: '角色已回應，暫時無法分享動作。' },
+    retry: '再試一次',
+  },
+  en: {
+    gesture: { wave: 'You offered a wave. ', sit: 'You found a place to sit. ', idle: 'You are resting freely. ' },
+    sync: { pending: 'Sharing your action…', shared: 'Your action reached the garden.', failed: 'Your character responded. Sharing is temporarily unavailable.' },
+    retry: 'Try sharing again',
+  },
+};
+
 export default function QuietGarden({ language, onClose, enabled = false, captchaToken, onCaptchaConsumed, challenge, notesSlot, motionEnabled = true }: { language: Language; onClose: () => void; enabled?: boolean; captchaToken?: string; onCaptchaConsumed?: () => void; challenge?: ReactNode; notesSlot?: ReactNode; motionEnabled?: boolean }) {
   const t = labels[language];
+  const actions = actionMessages[language];
   const [status, setStatus] = useState<'idle' | 'verification' | 'joining' | 'connected' | 'reconnecting' | 'paused' | 'unavailable'>('idle');
   const [peers, setPeers] = useState<PresenceState[]>([]);
   const [ownGesture, setOwnGesture] = useState<GardenGesture>('idle');
+  const [ownGuestKey, setOwnGuestKey] = useState<string>();
+  const [ownSeatId, setOwnSeatId] = useState<NonNullable<PresenceState['seatId']>>(GARDEN_DEFAULT_SEAT);
+  const [ownMoving, setOwnMoving] = useState(false);
+  const [ownWaveKey, setOwnWaveKey] = useState(0);
+  const [feedback, setFeedback] = useState<{ gesture: GardenGesture; sync: 'pending' | 'shared' | 'failed' }>();
   const [greeting, setGreeting] = useState(false);
   const connection = useRef<GardenConnection | undefined>(undefined);
   const controller = useRef<AbortController | undefined>(undefined);
   const timers = useRef(new Set<ReturnType<typeof setTimeout>>());
   const generation = useRef(0);
+  const actionSequence = useRef(0);
+  const restingPose = useRef<'sit' | 'idle'>('idle');
+  const localSeat = useRef<NonNullable<PresenceState['seatId']>>(GARDEN_DEFAULT_SEAT);
+  const waveTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+  const moveTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+  const greetingTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+  const waveButton = useRef<HTMLButtonElement>(null);
+  const acknowledgeButton = useRef<HTMLButtonElement>(null);
+  const lastRequest = useRef<{ gesture: GardenGesture; seatId?: NonNullable<PresenceState['seatId']> } | undefined>(undefined);
 
   const clear = () => { for (const timer of timers.current) clearTimeout(timer); timers.current.clear(); };
+  const cancelTimer = (timer: ReturnType<typeof setTimeout> | undefined) => { if (timer) { clearTimeout(timer); timers.current.delete(timer); } };
+  const later = (delay: number, callback: () => void) => {
+    const timer = setTimeout(() => { timers.current.delete(timer); callback(); }, delay);
+    timers.current.add(timer); return timer;
+  };
   const leave = () => {
-    ++generation.current; controller.current?.abort(); controller.current = undefined;
+    ++generation.current; ++actionSequence.current; controller.current?.abort(); controller.current = undefined;
     const current = connection.current; connection.current = undefined; void current?.leave();
-    clear(); setPeers([]); setGreeting(false); setOwnGesture('idle');
+    clear(); setPeers([]); setGreeting(false); setOwnGesture('idle'); setOwnGuestKey(undefined); setOwnMoving(false); setOwnWaveKey(0); setFeedback(undefined);
+    restingPose.current = 'idle'; localSeat.current = GARDEN_DEFAULT_SEAT; setOwnSeatId(GARDEN_DEFAULT_SEAT); lastRequest.current = undefined;
   };
   useEffect(() => {
     const hidden = () => { if (document.hidden && (controller.current || connection.current)) { leave(); setStatus('paused'); } };
     document.addEventListener('visibilitychange', hidden);
-    return () => { ++generation.current; controller.current?.abort(); void connection.current?.leave(); clear(); document.removeEventListener('visibilitychange', hidden); };
+    return () => { ++generation.current; ++actionSequence.current; controller.current?.abort(); void connection.current?.leave(); clear(); document.removeEventListener('visibilitychange', hidden); };
   }, []);
   useEffect(() => { if (!enabled) { leave(); setStatus('idle'); } }, [enabled]);
 
@@ -47,18 +82,18 @@ export default function QuietGarden({ language, onClose, enabled = false, captch
     timers.current.add(deadline);
     try {
       const joined = await joinQuietGarden({ captchaToken, onCaptchaConsumed, signal: abort.signal, onPeers: next => { if (active === generation.current) setPeers(next); },
-        onStatus: next => { if (active === generation.current) { if (next === 'unavailable') leave(); setStatus(next); } },
+        onStatus: next => { if (active === generation.current) { if (next === 'unavailable') leave(); if (next !== 'connected' || connection.current) setStatus(next); } },
         onGesture: event => {
           if (active !== generation.current || event.gesture !== 'wave') return;
           // Broadcast payloads are not proof of an individual sender's identity.
           // Offer a garden-wide greeting without animating a claimed peer.
           setGreeting(true);
-          const timer = setTimeout(() => { timers.current.delete(timer); if (active === generation.current) setGreeting(false); }, 650);
-          timers.current.add(timer);
+          cancelTimer(greetingTimer.current);
+          greetingTimer.current = later(3500, () => { if (active === generation.current) { if (document.activeElement === acknowledgeButton.current) waveButton.current?.focus(); setGreeting(false); } });
         } });
       if (active !== generation.current) { await joined.leave(); return; }
       clearTimeout(deadline); timers.current.delete(deadline);
-      connection.current = joined; setStatus('connected');
+      connection.current = joined; setOwnGuestKey(joined.guestKey); setStatus('connected');
     } catch (error) {
       clearTimeout(deadline); timers.current.delete(deadline);
       if (active === generation.current) {
@@ -68,39 +103,57 @@ export default function QuietGarden({ language, onClose, enabled = false, captch
       }
     }
   };
-  const perform = async (gesture: GardenGesture) => {
+  const perform = async (gesture: GardenGesture, seatId?: NonNullable<PresenceState['seatId']>) => {
     if (status !== 'connected') return;
-    const active = generation.current;
-    const resting = ownGesture === 'sit' ? 'sit' : 'idle';
-    if (!await connection.current?.perform(gesture)) return;
-    if (active !== generation.current) return;
-    setOwnGesture(gesture);
-    if (gesture === 'wave') {
-      const timer = setTimeout(() => { timers.current.delete(timer); if (active === generation.current) setOwnGesture(resting); }, 650);
-      timers.current.add(timer);
+    const active = generation.current, sequence = ++actionSequence.current;
+    lastRequest.current = { gesture, seatId };
+    // A local action is immediate; network acknowledgement only changes the
+    // sharing feedback, never whether a visitor can see their own response.
+    cancelTimer(waveTimer.current);
+    if (seatId && seatId !== localSeat.current) {
+      localSeat.current = seatId; setOwnSeatId(seatId); setOwnMoving(motionEnabled);
+      cancelTimer(moveTimer.current);
+      moveTimer.current = later(600, () => { if (active === generation.current) setOwnMoving(false); });
     }
+    if (gesture !== 'wave') restingPose.current = gesture;
+    setOwnGesture(gesture); setFeedback({ gesture, sync: 'pending' });
+    if (gesture === 'wave') {
+      setOwnWaveKey(value => value + 1);
+      waveTimer.current = later(900, () => { if (active === generation.current) setOwnGesture(restingPose.current); });
+    }
+    let shared = false;
+    try { shared = await (seatId ? connection.current?.perform(gesture, seatId) : connection.current?.perform(gesture)) ?? false; } catch { /* Keep local response and offer an explicit retry. */ }
+    if (active === generation.current && sequence === actionSequence.current) setFeedback({ gesture, sync: shared ? 'shared' : 'failed' });
   };
 
   return <section className="quiet-garden" aria-label={t.title} data-motion={motionEnabled ? 'on' : 'off'}>
-    <header><h2>{t.title}</h2><p>{t.introduction}</p></header>
-    <div className="quiet-garden-art" aria-hidden="true">
-      <svg viewBox="0 0 720 280" focusable="false"><path d="M0 0H720V280H0Z" fill="#e5eadb"/><path d="M0 155Q190 113 360 174Q540 218 720 145V280H0Z" fill="#a7bca3"/><path d="M0 230Q310 173 720 251V280H0Z" fill="#d5c9a9"/><g fill="#56765e"><path d="M66 171Q5 103 55 75Q105 93 66 171Z"/><path d="M641 184Q588 111 640 83Q696 108 641 184Z"/></g><g fill="#8c7960"><rect x="126" y="188" width="112" height="12" rx="3"/><path d="M137 200V224M227 200V224" stroke="#8c7960" strokeWidth="8"/><rect x="486" y="188" width="112" height="12" rx="3"/><path d="M497 200V224M587 200V224" stroke="#8c7960" strokeWidth="8"/></g></svg>
-      {status === 'connected' && <GardenVisitor own gesture={ownGesture} index={0} />}
-      {peers.map((peer, index) => <GardenVisitor key={peer.guestKey} gesture={peer.gesture} index={index + 1} variant={peer.avatarVariant} />)}
-    </div>
-    <p className="quiet-garden-privacy">{t.privacy}</p>
+    <header className="garden-heading"><div><p className="garden-kicker">{language === 'zh' ? '一座小庭院，一段慢時光' : 'A LITTLE GARDEN, A SLOWER MOMENT'}</p><h2>{language === 'zh' ? '找一處樹蔭，坐一會兒。' : 'Find a little shade. Stay a while.'}</h2><p>{t.introduction}</p></div><span className="garden-connection-pill" data-connected={status === 'connected'}>{status === 'connected' ? language === 'zh' ? '已連線' : 'Connected' : status === 'reconnecting' ? language === 'zh' ? '重新連接中' : 'Reconnecting' : language === 'zh' ? '自在探索' : 'At your own pace'}</span></header>
+    <GardenScene language={language} connected={status === 'connected'} motionEnabled={motionEnabled} ownGuestKey={ownGuestKey} ownGesture={ownGesture} ownRestingPose={restingPose.current} ownSeatId={ownSeatId} ownMoving={ownMoving} ownWaveKey={ownWaveKey} peers={peers} onChooseSeat={seat => void perform('sit', seat)} />
     {status === 'joining' && <p role="status">{t.connecting}</p>}
     {status === 'connected' || status === 'reconnecting' ? <>
-      {status === 'connected' ? <><p>{t.others}: {peers.length}</p>{peers.length === 0 && <p>{t.empty}</p>}</> : <p>{t.reconnecting}</p>}
-      <div className="quiet-garden-actions"><button aria-disabled={status !== 'connected'} onClick={() => void perform('sit')}>{t.sit}</button><button aria-disabled={status !== 'connected'} onClick={() => void perform('wave')}>{t.wave}</button><button aria-disabled={status !== 'connected'} onClick={() => void perform('idle')}>{t.idle}</button>{greeting && <button aria-disabled={status !== 'connected'} onClick={() => void perform('wave')}>{t.acknowledge}</button>}<button onClick={() => { leave(); setStatus('idle'); }}>{t.leave}</button></div>
-    </> : <>{enabled ? <>{status === 'verification' && <div className="garden-verification"><p role="status">{language === 'zh' ? '進入前，請先完成訪客驗證。' : 'Please verify guest access before entering.'}</p>{challenge}</div>}<button className="primary-button" disabled={status === 'joining' || (status === 'verification' && !captchaToken)} onClick={() => void enter()}>{t.enter}</button></> : <p>{t.disabled}</p>}</>}
+      <div className="garden-presence-summary">{status === 'connected' ? <><p>{t.others}: {peers.length}</p>{peers.length === 0 && <p>{t.empty}</p>}</> : <p>{t.reconnecting}</p>}</div>
+      <div className="quiet-garden-actions garden-action-dock" role="group" aria-label={language === 'zh' ? '你的庭院動作' : 'Your garden actions'}>
+        <button disabled={status !== 'connected'} aria-disabled={status !== 'connected'} aria-pressed={restingPose.current === 'sit'} onClick={() => void perform('sit', ownSeatId === GARDEN_DEFAULT_SEAT ? GARDEN_DEFAULT_BENCH : ownSeatId)}><ActionIcon action="sit" />{t.sit}</button>
+        <button ref={waveButton} disabled={status !== 'connected'} aria-disabled={status !== 'connected'} aria-pressed={ownGesture === 'wave'} onClick={() => void perform('wave')}><ActionIcon action="wave" />{t.wave}</button>
+        <button disabled={status !== 'connected'} aria-disabled={status !== 'connected'} aria-pressed={ownGesture === 'idle'} onClick={() => void perform('idle', ownSeatId)}><ActionIcon action="idle" />{t.idle}</button>
+        {greeting && <button ref={acknowledgeButton} disabled={status !== 'connected'} aria-disabled={status !== 'connected'} onClick={() => { cancelTimer(greetingTimer.current); setGreeting(false); void perform('wave'); }}>{t.acknowledge}</button>}
+        <button className="garden-leave" onClick={() => { leave(); setStatus('idle'); }}>{t.leave}</button>
+      </div>
+      {greeting && <p className="garden-greeting">{language === 'zh' ? '庭院裡傳來一聲輕輕的問候。' : 'A gentle greeting arrives in the garden.'}</p>}
+      {feedback && <div className="garden-action-feedback" data-sync={feedback.sync}>
+        <span role="status">{actions.gesture[feedback.gesture]}{actions.sync[feedback.sync]}</span>
+        {feedback.sync === 'failed' && <button className="text-button" disabled={status !== 'connected'} onClick={() => {
+          const request = lastRequest.current;
+          if (request) void perform(request.gesture, request.seatId);
+        }}>{actions.retry}</button>}
+      </div>}
+    </> : <div className="garden-join-panel">{enabled ? <>{status === 'verification' && <div className="garden-verification"><p role="status">{language === 'zh' ? '進入前，請先完成訪客驗證。' : 'Please verify guest access before entering.'}</p>{challenge}</div>}<button className="primary-button" disabled={status === 'joining' || (status === 'verification' && !captchaToken)} onClick={() => void enter()}>{t.enter}</button></> : <p>{t.disabled}</p>}</div>}
     {status === 'unavailable' && <p>{t.unavailable}</p>}{status === 'paused' && <p>{t.pause}</p>}
-    {notesSlot}<button className="text-button" onClick={() => { leave(); onClose(); }}>{t.close}</button>
+    <p className="quiet-garden-privacy">{t.privacy}</p>
+    {notesSlot}<button className="text-button garden-return" onClick={() => { leave(); onClose(); }}>{t.close}</button>
   </section>;
 }
 
-function GardenVisitor({ index, gesture, variant = 'sage', own = false }: { index: number; gesture: GardenGesture; variant?: PresenceState['avatarVariant']; own?: boolean }) {
-  return <svg className={`garden-visitor garden-gesture-${gesture}${own ? ' garden-own' : ''}`} style={{ left: `${15 + index % 8 * 10}%`, top: `${55 + Math.floor(index / 8) % 3 * 11}%` }} viewBox="0 0 48 64" focusable="false" data-variant={variant}>
-    <ellipse cx="24" cy="57" rx="17" ry="4" fill="#243b2d" opacity=".18"/><path d="M13 32Q24 24 35 32L37 50H11Z" fill={variant === 'clay' ? '#a46c55' : variant === 'ochre' ? '#b49451' : '#51766a'}/><circle cx="24" cy="20" r="11" fill="#d4ae86"/><path d="M13 19Q13 4 24 7Q37 6 35 20Q25 11 13 19" fill="#4d463b"/><path className="garden-visitor-arm" d="M34 34 42 42" fill="none" stroke="#d4ae86" strokeWidth="5" strokeLinecap="round"/><path d="M18 49V58M30 49V58" stroke="#4d463b" strokeWidth="5" strokeLinecap="round"/>
-  </svg>;
+function ActionIcon({ action }: { action: GardenGesture }) {
+  return <svg className="garden-action-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">{action === 'sit' ? <><path d="M5 11h14v4H5zM7 15v5m10-5v5M6 11V5h12v6" /></> : action === 'wave' ? <><path d="m8 13-2-3c-1-2 1-3 2-1l2 2V5c0-2 3-2 3 0v5l1-6c0-2 3-1 2 1l-1 6 2-4c1-2 3-1 2 1l-2 7c-2 6-7 7-10 2l-2-3c-1-2 1-3 3-1Z" /></> : <><path d="M4 17h16M8 17c-4-7-2-10 3-8 0-6 5-7 6-2 5-1 6 4 0 6-1 3-3 4-9 4Z" /></>}</svg>;
 }

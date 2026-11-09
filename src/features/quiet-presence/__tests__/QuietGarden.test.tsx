@@ -4,11 +4,12 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import QuietGarden from '../QuietGarden';
 import { joinQuietGarden } from '../presenceClient';
 import { QuietVerificationRequiredError } from '../../../services/supabaseClient';
+import { GARDEN_DEFAULT_BENCH, GARDEN_DEFAULT_SEAT } from '../GardenScene';
 
 vi.mock('../presenceClient', () => ({ joinQuietGarden: vi.fn() }));
 const key = 'c6244e7a-c5bc-4f8b-b3d4-7ebc2738a7c1';
 const connection = { guestKey: key, leave: vi.fn(async () => undefined), perform: vi.fn(async () => true) };
-beforeEach(() => { vi.clearAllMocks(); vi.mocked(joinQuietGarden).mockResolvedValue(connection); });
+beforeEach(() => { vi.clearAllMocks(); connection.perform.mockResolvedValue(true); vi.mocked(joinQuietGarden).mockResolvedValue(connection); });
 afterEach(() => { cleanup(); vi.useRealTimers(); vi.restoreAllMocks(); });
 
 describe('optional quiet garden', () => {
@@ -53,7 +54,7 @@ describe('optional quiet garden', () => {
     expect(screen.getByText('Other connected visitors: 1')).toBeTruthy();
     expect(container.querySelectorAll('.garden-visitor')).toHaveLength(2);
     fireEvent.click(screen.getByRole('button', { name: 'Sit quietly' }));
-    await waitFor(() => expect(connection.perform).toHaveBeenCalledWith('sit'));
+    await waitFor(() => expect(connection.perform).toHaveBeenCalledWith('sit', GARDEN_DEFAULT_BENCH));
     fireEvent.click(screen.getByRole('button', { name: 'Wave' }));
     await waitFor(() => expect(connection.perform).toHaveBeenCalledWith('wave'));
     fireEvent.click(screen.getByRole('button', { name: 'Leave shared garden' }));
@@ -133,12 +134,53 @@ describe('optional quiet garden', () => {
     expect(vi.getTimerCount()).toBe(0);
   });
 
-  it('updates language without connecting and honors the explicit animation-off presentation', () => {
+  it('updates language without connecting and supports reduced-motion presentation', () => {
     const { container, rerender } = render(<QuietGarden language="zh" enabled motionEnabled={false} onClose={vi.fn()} />);
     expect(screen.getByRole('button', { name: '進入靜心庭院' })).toBeTruthy();
     expect(container.querySelector('.quiet-garden')?.getAttribute('data-motion')).toBe('off');
     rerender(<QuietGarden language="en" enabled motionEnabled={false} onClose={vi.fn()} />);
     expect(screen.getByRole('button', { name: 'Enter Quiet Garden' })).toBeTruthy();
     expect(joinQuietGarden).not.toHaveBeenCalled();
+  });
+
+  it('shows an immediate local response while the shared acknowledgement is pending', async () => {
+    let acknowledge!: (value: boolean) => void;
+    connection.perform.mockImplementationOnce(() => new Promise(resolve => { acknowledge = resolve; }));
+    const { container } = render(<QuietGarden language="en" enabled onClose={vi.fn()} />);
+    fireEvent.click(screen.getByRole('button', { name: 'Enter Quiet Garden' }));
+    await screen.findByRole('button', { name: 'Wave' });
+    fireEvent.click(screen.getByRole('button', { name: 'Wave' }));
+    expect(container.querySelector('.garden-own')?.classList.contains('garden-gesture-wave')).toBe(true);
+    expect(screen.getByRole('status').textContent).toContain('Sharing your action');
+    await act(async () => acknowledge(true));
+    expect(screen.getByRole('status').textContent).toContain('Your action reached the garden');
+  });
+
+  it('keeps local feedback and provides a retry instead of silently ignoring a failed send', async () => {
+    connection.perform.mockResolvedValueOnce(false);
+    const { container } = render(<QuietGarden language="en" enabled onClose={vi.fn()} />);
+    fireEvent.click(screen.getByRole('button', { name: 'Enter Quiet Garden' }));
+    await screen.findByRole('button', { name: 'Wave' });
+    fireEvent.click(screen.getByRole('button', { name: 'Wave' }));
+    await screen.findByRole('button', { name: 'Try sharing again' });
+    expect(container.querySelector('.garden-own')?.classList.contains('garden-gesture-wave')).toBe(true);
+    fireEvent.click(screen.getByRole('button', { name: 'Try sharing again' }));
+    await waitFor(() => expect(screen.queryByRole('button', { name: 'Try sharing again' })).toBeNull());
+    expect(connection.perform).toHaveBeenCalledTimes(2);
+  });
+
+  it('moves to a chosen seat and ignores superseded send results', async () => {
+    let first!: (value: boolean) => void;
+    connection.perform.mockImplementationOnce(() => new Promise(resolve => { first = resolve; }));
+    const { container } = render(<QuietGarden language="en" enabled onClose={vi.fn()} />);
+    fireEvent.click(screen.getByRole('button', { name: 'Enter Quiet Garden' }));
+    await screen.findByRole('button', { name: 'Wave' });
+    fireEvent.click(screen.getByRole('button', { name: 'Go to Pondside bench' }));
+    expect(container.querySelector('.garden-own')?.getAttribute('data-seat')).toBe('seat-3');
+    fireEvent.click(screen.getByRole('button', { name: 'Wave' }));
+    await waitFor(() => expect(screen.getByRole('status').textContent).toContain('Your action reached the garden'));
+    await act(async () => first(false));
+    expect(screen.queryByRole('button', { name: 'Try sharing again' })).toBeNull();
+    expect(container.querySelector('.garden-own')?.getAttribute('data-seat')).not.toBe(GARDEN_DEFAULT_SEAT);
   });
 });
