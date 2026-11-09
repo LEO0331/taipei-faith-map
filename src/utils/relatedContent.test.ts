@@ -25,13 +25,13 @@ describe('explicit related cultural relationships', () => {
     expect(qingshui.map(item => item.target.kind)).toEqual(['milestone', 'story', 'route']);
     for (const id of ['org-109-1vaoeq', 'org-335-mdesof']) {
       const items = getRelatedCulturalItems(place(id), organizations, today);
-      expect(items.map(item => item.target.kind)).toEqual(['route']);
-      expect(items[0].target.id).toBe('dadaocheng-faith-and-community');
+      expect(items.some(item => item.target.id === 'dadaocheng-faith-and-community')).toBe(true);
+      expect(items.every(item => item.target.organizationId === id)).toBe(true);
     }
   });
 
   it('does not infer connections from religion, proximity or a similar place name', () => {
-    expect(getRelatedCulturalItems(place('org-1-mtb4vg'), organizations, today)).toEqual([]);
+    expect(getRelatedCulturalItems(place('org-2-y94nau'), organizations, today)).toEqual([]);
     const qingshan = place('org-21-1bs6r0m');
     for (const changed of [{ ...qingshan, id: 'different' }, { ...qingshan, name: `${qingshan.name}分堂` }, { ...qingshan, district: '大同區' }, { ...qingshan, address: `${qingshan.address}2樓` }]) {
       expect(getRelatedCulturalItems(changed, organizations, today)).toEqual([]);

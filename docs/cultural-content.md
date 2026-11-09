@@ -171,3 +171,29 @@ V1.4's Catholic research candidate illustrates the identity rule: a parish at To
 修訂內容時執行 `npm run content:audit -- --as-of YYYY-MM-DD`，[稽核指南](content-audit.md)說明涵蓋範圍、結構錯誤、提醒門檻與固定輸出。延伸內容必須通過既有身分及內容驗證，不能只憑教別或相似名稱連結，並應保留返回原場所的入口。[文化審閱流程](cultural-review-workflow.md)說明外部審閱的準備與紀錄，不預先宣稱已審閱或背書。
 
 本次天主教候選案例再次說明身分限制：通化街178號的堂區與172號的登記修會未被視為同一團體。無法證明資料集身分及地址時保留中性備援；文化內容收錄量不是宗教重要性的衡量。
+
+## V2.1a route review / 路線核對
+
+Four routes are internally reviewed as of **2026-11-09**. Each selected stop lists the evidence for its specific claims. The route descriptions propose comparisons among the stops, and the cards show the editorial order before visitors enter a route.
+
+| Route | Reading focus and source evidence |
+| --- | --- |
+| 艋舺三處廟宇文化 / Three temple stories in Bangka | Compare hall sequences and rebuilding. The [Lungshan heritage record](https://taiwangods.moi.gov.tw/html/Cultural/3_0011.aspx?i=13) describes three halls with side wings and the 1920 rebuilding. The [Qingshan heritage record](https://taiwangods.moi.gov.tw/Religious_Culture/html/Cultural/3_0011.aspx?i=211) describes its entrance, corridors and courtyards. The [Qingshui heritage record](https://taiwangods.moi.gov.tw/html/Cultural/3_0011.aspx?i=12) records rebuilding completed in 1867 and two of the original three halls remaining. |
+| 大稻埕的教會與城隍廟 / A church and a City God temple in Dadaocheng | Read different uses of buildings along two streets. The [church heritage record](https://taiwangods.moi.gov.tw/Religious_Culture/html/Cultural/3_0011.aspx?i=356) documents former postal use at the site. The [Presbyterian Church directory](https://www.pct.org.tw/churchdata.aspx?strOrgNo=C03001) separately records the congregation’s establishment. The [City God temple record](https://taiwangods.moi.gov.tw/Religious_Culture/html/Cultural/3_0011.aspx?i=58) describes the hall and worship pavilion. |
+| 饒河街的兩座廟 / Two temples around Raohe Street | The [Danlan National Greenway’s Songshan entry](https://danlantrail.necoast-nsa.gov.tw/Towns-Content.aspx?a=3424&cat=3408&fromCnt=0&l=1&listid=3256) places both temples in the old Xikou Street area. The [Ministry of the Interior’s Ciyou entry](https://taiwangods.moi.gov.tw/Religious_Culture/html/landscape/1_0011.aspx?i=2) describes the temple’s layout. The [district history team’s Fude entry](https://tcmb.culture.tw/zh-tw/detail?id=292340&indexCode=Culture_Place), hosted by the Ministry of Culture, records the 1982 road widening and rebuilding at the current address. |
+| 新生南路的圓頂與屋簷 / Domes and rooflines on Xinsheng South Road | Compare the mosque’s exterior forms with the church’s roofline. [Taipei Pictorial, November 2023, pp. 30–33](https://www.travel.taipei/file/34731/) treats both places in its Xinsheng South Road feature. The [mosque guide](https://www.taipeimosque.org.tw/guided.php?lang=tw) corroborates the site, and the church’s [history](https://www.gbc.org.tw/gbc60/) and [location page](https://www.gbc.org.tw/time-and-location/) corroborate the rebuilding design and address. |
+
+The two added routes use the following exact matches in the generated government registration snapshot. Coordinates below are current registration points in latitude/longitude order.
+
+| ID | Registered organization | District and address | Coordinates |
+| --- | --- | --- | --- |
+| `org-1-mtb4vg` | 財團法人台北市松山慈祐宮 | 松山區八德路4段761號 | 25.0510582, 121.5777171 |
+| `org-22-cu44hi` | 松山福德宮 | 松山區饒河街92號 | 25.0503538, 121.5741206 |
+| `org-530-nftfoh` | 財團法人台北清真寺基金會 | 大安區新生南路2段62號 | 25.027937, 121.5342124 |
+| `org-345-5rclx6` | 財團法人台北市基督教浸信會懷恩堂 | 大安區新生南路3段90號 | 25.0177821, 121.5331964 |
+
+四條路線於 **2026-11-09** 內部核對。表格記錄資料集的完整身分與現行登記座標，各站的文化敘述附原始來源。松山長老教會和台北聖家堂雖出現在相關出版資料，因未在本次資料集找到完整的登記身分對應，本次未列為站點。路線以來源支持的比較角度組織，開放資訊和實際步行條件仍應由訪客另行確認。
+
+Previous and Next move focus to the newly selected stop’s heading, so keyboard users can read its description directly. Returning to the overview restores focus to the corresponding route card. The history action appears only when the application supplies a validated story match.
+
+上一站和下一站會將焦點移至新站標題，返回總覽會將焦點還給該路線卡片。歷史故事入口僅在有通過驗證的故事連結時出現。

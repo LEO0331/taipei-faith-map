@@ -12,7 +12,13 @@ const organizations = organizationsJson as ReligiousOrganization[];
 const route = culturalRoutes[0];
 afterEach(cleanup);
 
-function Harness({ initialLanguage = 'en', onExplore = vi.fn(), onExit = vi.fn() }: { initialLanguage?: Language; onExplore?: (organization: ReligiousOrganization) => void; onExit?: () => void }) {
+function Harness({ initialLanguage = 'en', onExplore = vi.fn(), onExit = vi.fn(), onOpenHistory, historyRouteIds }: {
+  initialLanguage?: Language;
+  onExplore?: (organization: ReligiousOrganization) => void;
+  onExit?: () => void;
+  onOpenHistory?: (route: ResolvedCulturalRoute) => void;
+  historyRouteIds?: ReadonlySet<string>;
+}) {
   const [language, setLanguage] = useState<Language>(initialLanguage);
   const [selectedRoute, setSelectedRoute] = useState<ResolvedCulturalRoute>();
   const [selectedStopId, setSelectedStopId] = useState<string>();
@@ -20,7 +26,7 @@ function Harness({ initialLanguage = 'en', onExplore = vi.fn(), onExit = vi.fn()
     <button onClick={() => setLanguage(current => current === 'en' ? 'zh' : 'en')}>Change language</button>
     <CulturalRoutesPanel organizations={organizations} language={language} selectedRoute={selectedRoute} selectedStopId={selectedStopId}
       onSelectRoute={selected => { setSelectedRoute(selected); setSelectedStopId(selected?.organizations[0].id); }}
-      onSelectStop={setSelectedStopId} onExplore={onExplore} onExit={onExit} />
+      onSelectStop={setSelectedStopId} onExplore={onExplore} onExit={onExit} onOpenHistory={onOpenHistory} historyRouteIds={historyRouteIds} />
   </>;
 }
 
@@ -47,7 +53,7 @@ describe('walking route browsing and stop selection', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Next stop' }));
     const second = screen.getByRole('button', { name: new RegExp(`${route.stops[1].title.en}.*2 of ${route.stops.length} stops`) });
     expect(second.getAttribute('aria-pressed')).toBe('true');
-    expect(document.activeElement).toBe(second);
+    expect(document.activeElement).toBe(screen.getByRole('heading', { name: route.stops[1].title.en }));
     fireEvent.click(screen.getByRole('button', { name: 'Explore Faith Space' }));
     expect(onExplore).toHaveBeenCalledExactlyOnceWith(organizations.find(organization => organization.id === route.stops[1].organizationId));
     const last = screen.getByRole('button', { name: new RegExp(`${route.stops[route.stops.length - 1].title.en}.*${route.stops.length} of ${route.stops.length} stops`) });
@@ -72,7 +78,21 @@ describe('walking route browsing and stop selection', () => {
     expect(onExit).toHaveBeenCalledOnce();
     fireEvent.click(screen.getByRole('button', { name: /返回路線總覽/ }));
     expect(screen.getByRole('button', { name: `選擇路線: ${route.title.zh}` })).toBeTruthy();
-    expect(document.activeElement).toBe(screen.getByRole('heading', { name: '宗教文化散步路線' }));
+    expect(document.activeElement).toBe(screen.getByRole('button', { name: `選擇路線: ${route.title.zh}` }));
+  });
+
+  it('only opens history for a route with a validated related story', () => {
+    const onOpenHistory = vi.fn();
+    render(<Harness onOpenHistory={onOpenHistory} historyRouteIds={new Set([route.id])} />);
+    fireEvent.click(screen.getByRole('button', { name: `Choose route: ${route.title.en}` }));
+    const action = screen.getByRole('button', { name: /Read the history behind this route/ });
+    fireEvent.click(action);
+    expect(document.activeElement).toBe(action);
+    expect(onOpenHistory).toHaveBeenCalledExactlyOnceWith(expect.objectContaining({ route }));
+
+    fireEvent.click(screen.getByRole('button', { name: /Return to route overview/ }));
+    fireEvent.click(screen.getByRole('button', { name: `Choose route: ${culturalRoutes[1].title.en}` }));
+    expect(screen.queryByRole('button', { name: /Read the history behind this route/ })).toBeNull();
   });
 
   it('provides an accurate empty state when records cannot be uniquely verified', () => {

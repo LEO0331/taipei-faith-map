@@ -4,13 +4,14 @@ import type { ReligiousOrganization } from '../../../types';
 import { culturalRoutes } from '../culturalRoutes';
 import { getAvailableRoutes, resolveCulturalRoute } from '../routeLookup';
 import { validateCulturalRoutes } from '../routeValidation';
+import { getWalkingDirections } from '../walkingDirections';
 
 const organizations = organizationsJson as ReligiousOrganization[];
 const route = culturalRoutes[0];
 
 describe('curated walking route identities and evidence', () => {
   it('validates the reviewed collection against real organizations offline', () => {
-    expect(culturalRoutes.length).toBeGreaterThanOrEqual(2);
+    expect(culturalRoutes).toHaveLength(4);
     expect(validateCulturalRoutes(culturalRoutes, organizations)).toEqual([]);
     const available = getAvailableRoutes(organizations);
     expect(available).toHaveLength(culturalRoutes.length);
@@ -19,6 +20,19 @@ describe('curated walking route identities and evidence', () => {
       expect(resolved.route.editorialReviewStatus).toBe('internal-reviewed');
     }
     expect(validateCulturalRoutes(culturalRoutes, [...organizations].reverse())).toEqual([]);
+  });
+
+  it.each([
+    ['songshan-raohe-temples', 'org-1-mtb4vg', 'org-22-cu44hi', '25.0510582,121.5777171', '25.0503538,121.5741206'],
+    ['daan-xinsheng-faith-architecture', 'org-530-nftfoh', 'org-345-5rclx6', '25.027937,121.5342124', '25.0177821,121.5331964'],
+  ])('uses the two verified places in order for %s', (id, first, last, origin, destination) => {
+    const resolved = getAvailableRoutes(organizations).find(item => item.route.id === id);
+    expect(resolved?.organizations.map(item => item.id)).toEqual([first, last]);
+    const directions = getWalkingDirections(resolved!.organizations);
+    const params = new URL(directions!.url!).searchParams;
+    expect(params.get('origin')).toBe(origin);
+    expect(params.get('destination')).toBe(destination);
+    expect(params.get('travelmode')).toBe('walking');
   });
 
   it('rejects duplicate route identifiers and repeated stops', () => {
