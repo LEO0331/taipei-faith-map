@@ -21,7 +21,7 @@ describe('offline cultural content audit', () => {
   it('audits every real curated collection using existing validators and records no invented community review', () => {
     const data = collectCuratedAuditData();
     const before = JSON.stringify(data);
-    const report = auditCuratedContent(data, organizations, '2026-11-05');
+    const report = auditCuratedContent(data, organizations, '2026-11-09');
     expect(report.errors).toEqual([]);
     expect(report.counts.profiles).toBe(data.profiles.length);
     expect(report.counts.stories).toBe(data.stories.length);

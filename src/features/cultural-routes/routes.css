@@ -9,6 +9,10 @@
 .cultural-route-card h3 { font-family: Georgia, 'Noto Serif TC', serif; font-size: 23px; font-weight: 500; margin: 8px 0 12px; }
 .cultural-route-card p { font-size: 14px; }
 .cultural-route-card .route-districts { font-size: 12px; letter-spacing: .05em; }
+.route-theme { color: #0f625c; font-weight: 700; }
+.route-card-stops { padding-inline-start: 1.35rem; margin: 12px 0 16px; color: #514b40; font-size: 13px; line-height: 1.6; }
+.route-card-stops li + li { margin-top: 5px; }
+.route-history-button { text-align: start; color: #0f625c; }
 .cultural-routes button, .cultural-routes a { min-height: 44px; }
 .cultural-routes :focus-visible { outline: 3px solid #0f766e; outline-offset: 4px; }
 .route-title { font-family: Georgia, 'Noto Serif TC', serif; font-size: 28px; font-weight: 500; margin: 22px 0 10px; }
@@ -22,7 +26,7 @@
 .route-stop-list strong { display: block; font-size: 14px; line-height: 1.6; }
 .route-stop-list small { display: block; font-size: 11px; color: #706358; line-height: 1.7; }
 .route-stop-detail { background: #fffdf7; border: 1px solid #ded6c8; border-radius: 6px; padding: 20px; }
-.route-stop-detail h3 { font-size: 24px; font-family: Georgia, 'Noto Serif TC', serif; font-weight: 500; margin: 8px 0 12px; }
+.route-stop-detail h4 { font-size: 24px; font-family: Georgia, 'Noto Serif TC', serif; font-weight: 500; margin: 8px 0 12px; scroll-margin-top: 12px; }
 .route-step-label { color: #0f766e; font-size: 12px; font-weight: 700; margin: 0; }
 .route-address { color: #706358; font-size: 13px; }
 .route-stop-actions { display: flex; flex-wrap: wrap; gap: 8px; margin: 18px 0; }

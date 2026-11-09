@@ -42,8 +42,8 @@ it('handles a rejected navigation with a translated retry message and usable con
 });
 
 it('renders no empty section for an unrelated or mismatched record', () => {
-  const ciyou = organizations.find(item => item.id === 'org-1-mtb4vg')!;
-  const { container, rerender } = render(<RelatedCulturalContent organization={ciyou} organizations={organizations} language="en" onNavigate={vi.fn()} />);
+  const unrelated = organizations.find(item => item.id === 'org-2-y94nau')!;
+  const { container, rerender } = render(<RelatedCulturalContent organization={unrelated} organizations={organizations} language="en" onNavigate={vi.fn()} />);
   expect(container.childElementCount).toBe(0);
   rerender(<RelatedCulturalContent organization={{ ...organization, name: '不同名稱' }} organizations={organizations} language="en" onNavigate={vi.fn()} />);
   expect(container.childElementCount).toBe(0);

@@ -16,6 +16,8 @@ type Props = {
   onSelectStop: (organizationId: string) => void;
   onExplore: (organization: ReligiousOrganization) => void;
   onExit: () => void;
+  onOpenHistory?: (route: ResolvedCulturalRoute) => void;
+  historyRouteIds?: ReadonlySet<string>;
 };
 
 const labels = {
@@ -31,6 +33,8 @@ const labels = {
     visitNote: '出發前請向場所確認開放及參訪規範。此導覽未查證步行安全、無障礙通行或人行道連續性。',
     sourcesNote: '文化敘述附有公開來源，不代表場所認可或背書。',
     selected: '目前停留點', progress: (step: number, total: number) => `第 ${step}／${total} 站`,
+    sequence: '依序探索', history: '閱讀這條路線的歷史故事',
+    themes: { heritage: '歷史建築', 'multi-faith': '街區信仰', architecture: '建築觀察', community: '地方生活' },
   },
   en: {
     title: 'Cultural Walking Routes', introduction: 'Follow source-backed cultural connections between real places in Taipei.',
@@ -44,10 +48,12 @@ const labels = {
     visitNote: 'Check opening and visitor arrangements with each location before setting out. Walking safety, step-free access and continuous sidewalks have not been verified by this guide.',
     sourcesNote: 'Cultural descriptions cite published sources and do not imply approval or endorsement by the locations.',
     selected: 'Selected stop', progress: (step: number, total: number) => `${step} of ${total} stops`,
+    sequence: 'Stop order', history: 'Read the history behind this route',
+    themes: { heritage: 'Historic buildings', 'multi-faith': 'Neighborhood faith', architecture: 'Architectural details', community: 'Local life' },
   },
 };
 
-export default function CulturalRoutes({ organizations, language, selectedRoute, selectedStopId, onSelectRoute, onSelectStop, onExplore, onExit }: Props) {
+export default function CulturalRoutes({ organizations, language, selectedRoute, selectedStopId, onSelectRoute, onSelectStop, onExplore, onExit, onOpenHistory, historyRouteIds }: Props) {
   const t = labels[language];
   const available = useMemo(() => getAvailableRoutes(organizations), [organizations]);
   const selected = available.find(item => item.route.id === selectedRoute?.route.id);
@@ -61,8 +67,9 @@ export default function CulturalRoutes({ organizations, language, selectedRoute,
   const activeOrganization = selected?.organizations[currentIndex];
   const activeStop = selected?.route.stops[currentIndex];
   const directions = useMemo(() => selected ? getWalkingDirections(selected.organizations) : undefined, [selected]);
-  const stopButtons = useRef<(HTMLButtonElement | null)[]>([]);
-  const recoverControlFocus = useRef(false);
+  const stopHeading = useRef<HTMLHeadingElement>(null);
+  const routeButtons = useRef(new Map<string, HTMLButtonElement>());
+  const focusStopDetail = useRef(false);
 
   useEffect(() => {
     if (selectedRoute && !selected) onSelectRoute(undefined);
@@ -70,21 +77,27 @@ export default function CulturalRoutes({ organizations, language, selectedRoute,
   }, [selected, selectedRoute, selectedStopId, onSelectRoute, onSelectStop]);
 
   useEffect(() => {
-    if (recoverControlFocus.current) {
-      stopButtons.current[currentIndex]?.focus();
-      recoverControlFocus.current = false;
+    if (focusStopDetail.current) {
+      stopHeading.current?.focus();
+      focusStopDetail.current = false;
     }
   }, [currentIndex]);
 
   useEffect(() => {
     if (selected?.route.id && previousRouteId.current !== selected.route.id) routeHeading.current?.focus();
-    else if (!selected && previousRouteId.current) overviewHeading.current?.focus();
+    else if (!selected && previousRouteId.current) {
+      (routeButtons.current.get(previousRouteId.current) ?? overviewHeading.current)?.focus();
+    }
     previousRouteId.current = selected?.route.id;
   }, [selected]);
 
   const moveStop = (index: number) => {
     if (!selected) return;
-    recoverControlFocus.current = true;
+    if (index === currentIndex) {
+      stopHeading.current?.focus();
+      return;
+    }
+    focusStopDetail.current = true;
     onSelectStop(selected.organizations[index].id);
   };
 
@@ -98,23 +111,33 @@ export default function CulturalRoutes({ organizations, language, selectedRoute,
       {available.length === 0 && <p className="status-text">{t.empty}</p>}
       <div className="cultural-route-list">
         {available.map(item => <article className="cultural-route-card" key={item.route.id}>
-          <p className="route-districts">{item.route.districtLabels.join(' · ')}</p>
+          <p className="route-districts"><span className="route-theme">{t.themes[item.route.theme]}</span> · {item.route.districtLabels.join(' · ')}</p>
           <h3>{item.route.title[language]}</h3><p>{item.route.description[language]}</p>
           <p className="route-card-meta">{item.organizations.length} {t.stops} · {new Set(item.organizations.map(organization => organization.religion)).size} {t.traditions}</p>
-          <button className="primary-button" onClick={() => onSelectRoute(item)}>{t.choose}<span className="route-sr-only">: {item.route.title[language]}</span></button>
+          <ol className="route-card-stops" aria-label={t.sequence}>
+            {item.route.stops.map(stop => <li key={stop.organizationId}>{stop.title[language]}</li>)}
+          </ol>
+          <button className="primary-button" ref={element => {
+            if (element) routeButtons.current.set(item.route.id, element);
+            else routeButtons.current.delete(item.route.id);
+          }} onClick={() => onSelectRoute(item)}>{t.choose}<span className="route-sr-only">: {item.route.title[language]}</span></button>
         </article>)}
       </div>
     </> : <div className="selected-cultural-route">
       <button className="text-button" onClick={() => onSelectRoute(undefined)}>← {t.overview}</button>
       <h3 className="route-title" ref={routeHeading} tabIndex={-1}>{selected.route.title[language]}</h3><p>{selected.route.description[language]}</p>
       <p className="route-review">{selected.route.editorialReviewStatus === 'community-reviewed' ? t.community : t.internal} · {t.reviewed}: <time dateTime={selected.route.lastReviewed}>{selected.route.lastReviewed}</time></p>
+      {onOpenHistory && historyRouteIds?.has(selected.route.id) && <button className="text-button route-history-button" data-route-history={selected.route.id} onClick={event => {
+        event.currentTarget.focus();
+        onOpenHistory(selected);
+      }}>{t.history} →</button>}
       <p className="route-notice">{t.directionsNote}</p>
-      <ol className="route-stop-list">
+      <ol className="route-stop-list" aria-label={t.sequence}>
         {selected.route.stops.map((stop, index) => {
           const organization = selected.organizations[index];
           return <li key={stop.organizationId}>
-            <button ref={element => { stopButtons.current[index] = element; }} aria-pressed={organization.id === selectedStopId} aria-controls={stopPanelId}
-              onClick={() => onSelectStop(organization.id)}>
+            <button aria-pressed={index === currentIndex} aria-controls={stopPanelId}
+              onClick={() => moveStop(index)}>
               <span className="route-stop-number" aria-hidden="true">{index + 1}</span>
               <span><strong>{stop.title[language]}</strong><small>{religionLabels[language][organization.religion]} · {organization.district}</small></span>
               <span className="route-sr-only">{t.progress(index + 1, selected.organizations.length)}</span>
@@ -124,7 +147,7 @@ export default function CulturalRoutes({ organizations, language, selectedRoute,
       </ol>
       {activeStop && activeOrganization && <article className="route-stop-detail" id={stopPanelId} role="region" tabIndex={-1} aria-labelledby={stopHeadingId}>
         <p className="route-step-label">{t.selected} · {t.progress(currentIndex + 1, selected.organizations.length)}</p>
-        <h3 id={stopHeadingId}>{activeStop.title[language]}</h3>
+        <h4 id={stopHeadingId} ref={stopHeading} tabIndex={-1}>{activeStop.title[language]}</h4>
         <p>{activeStop.description[language]}</p>
         <p className="route-address">{activeOrganization.name}<br />{activeOrganization.address}</p>
         <div className="route-stop-actions">
