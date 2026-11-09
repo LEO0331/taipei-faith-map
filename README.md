@@ -4,9 +4,11 @@ Mobile-first bilingual web app for exploring Taipei registered religious organiz
 
 [繁體中文說明](README-zh.md)
 
-## V2.0 integration status
+## Explore slowly. Notice deeply.
 
-The dedicated backend, protected functions, retention job and health workflow have hosted evidence. Final integration adds public GitHub Variables to the existing Pages build, fail-closed enabled-feature configuration checks, and reproducible Playwright browser verification. Real static/mobile/bilingual/keyboard/PWA and passive-note-reading checks passed. Real Turnstile failed to return a token in the tested automated browsers, so positive guest/peer/submission tests remain unverified. The owner subsequently authorized a **Garden-only human-validation pilot**: this workflow enables explicit Garden joining after owner review/merge, with CAPTCHA/JWT/private-channel checks intact. Corner and database posting remain off. See [current evidence](docs/release-v2.0.md) and [launch statuses](docs/public-launch-checklist.md).
+Search the map, visit an illustrated Faith Space, follow a sourced walking route, or read the history behind a place. V2.1 adds neighborhood walks in Songshan and Daan, stories about Songshan and Dadaocheng, and links that bring readers back to the stop they started from. The monthly review reports possible changes to source material for human review. See [V2.1 release evidence](docs/release-v2.1.md), [design philosophy](docs/design-philosophy.md) and [maintenance](docs/monthly-content-maintenance.md).
+
+The public site currently runs the Garden-only pilot. Its entry is available, and visitors join explicitly. Quiet Corner and posting remain outside this pilot. The V2.1 work is prepared for review. See the [demo guide](docs/demo-guide.md), [current launch checks](docs/public-launch-checklist.md) and [historical V2.0 evidence](docs/release-v2.0.md).
 
 After `npm ci`, install the test browser into an ignored workspace directory, build Pages, and run the real static browser suite (PowerShell):
 

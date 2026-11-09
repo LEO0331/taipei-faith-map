@@ -377,7 +377,10 @@ export function App() {
 
       <main id="main-content" ref={mainRef} tabIndex={-1}>
         {mode === 'map' && <section className="welcome-note" aria-label={language === 'zh' ? '從這裡開始' : 'Start here'}>
-          <p>{language === 'zh' ? '走進台北的信仰文化，慢慢探索，也可以只是停留片刻。' : "Discover Taipei’s faith and culture, explore at your own pace, or simply stay for a moment."}</p>
+          <div className="welcome-copy">
+            <p className="welcome-philosophy">{language === 'zh' ? '慢慢探索，重新感受。' : 'Explore slowly. Notice deeply.'}</p>
+            <p>{language === 'zh' ? '從一處場所開始，認識台北的信仰與文化。' : 'Discover Taipei’s faith and culture one place at a time.'}</p>
+          </div>
           <div className="welcome-actions">
             <button className="primary-button" disabled={!filteredOrganizations.length} onClick={event => {
               const control = event.currentTarget;

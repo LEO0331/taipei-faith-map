@@ -79,7 +79,9 @@ a {
 .garden-loading button { min-height: 44px; }
 .garden-loading :focus-visible { outline: 3px solid #0f766e; outline-offset: 4px; }
 .welcome-note { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px 24px; padding: 18px; background: #eef3ed; border: 1px solid #cddccc; border-radius: 10px; margin-bottom: 16px; }
-.welcome-note p { flex: 1 1 300px; margin: 0; color: #334c43; line-height: 1.8; max-width: 50rem; }
+.welcome-copy { flex: 1 1 300px; min-width: 0; max-width: 50rem; }
+.welcome-note p { margin: 0; color: #334c43; line-height: 1.65; }
+.welcome-note .welcome-philosophy { font-family: Georgia, 'Noto Serif TC', serif; font-size: clamp(1.25rem, 3vw, 1.6rem); line-height: 1.3; margin-bottom: 6px; }
 .welcome-actions { display: flex; align-items: center; flex-wrap: wrap; gap: 12px 20px; }
 .welcome-actions > * { min-height: 44px; display: inline-flex; align-items: center; justify-content: center; text-align: center; }
 .welcome-actions :focus-visible { outline: 3px solid #0f766e; outline-offset: 4px; }
@@ -90,6 +92,7 @@ a {
   letter-spacing: 0;
   line-height: 1.05;
   margin: 0.2rem 0 0.45rem;
+  overflow-wrap: anywhere;
 }
 
 .app-header p {
@@ -480,7 +483,10 @@ footer {
 @media (max-width: 680px) {
   .app-header {
     display: grid;
+    grid-template-columns: minmax(0, 1fr);
   }
+  .language-toggle { max-width: 100%; }
+  .language-toggle button { min-width: 0; padding-inline: clamp(8px, 3vw, 12px); }
 
   .map {
     height: 62vh;

@@ -56,3 +56,9 @@ The existing independent GitHub Actions workflow runs a bounded read-only query 
 If shared services fail, visitors can leave and continue solo exploration. Operators can pause posting at the database, hide content, or disable the shared UI with a new build. A frontend rollback does not reverse database migrations; use reviewed additive changes or a reviewed restoration procedure. Free-tier pausing and scheduler delays remain possible, and there is no guaranteed uptime SLA.
 
 See [controlled activation](public-launch-checklist.md), [Supabase integration](supabase-integration.md), [moderation](quiet-corner-moderation.md) and [health monitoring](supabase-health-check.md) for procedures and evidence boundaries.
+
+## V2.1 discovery and monthly maintenance
+
+Routes link to validated stories through a shared current-place identity. Story detours retain the reading context and a route return restores the selected stop and focus. Initial map rendering still defers the route, heritage and optional shared modules. Opening routes can load the heritage lookup to discover related stories.
+
+A dedicated monthly Actions workflow runs editorial audits and compares official government data to the reviewed JSON. Its report and tracking issue are review inputs for the owner. The workflow has no content publishing or deployment step. The Pages deployment, retention job and health workflow operate independently. See [monthly maintenance](monthly-content-maintenance.md).

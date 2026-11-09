@@ -1,0 +1,82 @@
+name: Monthly Cultural Content Review
+
+on:
+  schedule:
+    - cron: '23 1 8 * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: monthly-cultural-content-review
+  cancel-in-progress: false
+
+jobs:
+  monitor:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    permissions:
+      contents: read
+      issues: read
+    outputs:
+      notify: ${{ steps.report.outputs.notify }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm ci
+      - name: Read existing tracker state
+        run: node scripts/monthlyReviewIssue.mjs --read "$RUNNER_TEMP/monthly-review-prior.json"
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+      - name: Compare reviewed content with public sources
+        run: node --import tsx scripts/monthlyContentReview.ts --out "$RUNNER_TEMP/monthly-review" "$RUNNER_TEMP/monthly-review-prior.json"
+      - name: Record sanitized summary
+        id: report
+        if: always()
+        run: |
+          output="$RUNNER_TEMP/monthly-review"
+          mkdir -p "$output"
+          if [ ! -f "$output/report.json" ] || [ ! -f "$output/report.md" ]; then
+            printf '%s\n' '{"status":"Monitoring incomplete","notify":false,"reason":"Monitoring did not finish."}' > "$output/report.json"
+            printf '%s\n' '# Monthly cultural content review' '' '**Monitoring incomplete**' '' 'A prerequisite or monitoring step failed. No unchanged-content conclusion is available.' > "$output/report.md"
+          fi
+          cat "$output/report.md" >> "$GITHUB_STEP_SUMMARY"
+          node -e 'const data = JSON.parse(require("node:fs").readFileSync(process.argv[1], "utf8")); console.log("notify=" + (data.notify === true))' "$output/report.json" >> "$GITHUB_OUTPUT"
+      - name: Upload sanitized reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: monthly-cultural-content-review
+          path: |
+            ${{ runner.temp }}/monthly-review/report.md
+            ${{ runner.temp }}/monthly-review/report.json
+          retention-days: 60
+
+  notify:
+    needs: monitor
+    if: needs.monitor.outputs.notify == 'true' && github.ref == format('refs/heads/{0}', github.event.repository.default_branch)
+    runs-on: ubuntu-latest
+    timeout-minutes: 4
+    permissions:
+      contents: read
+      issues: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - uses: actions/download-artifact@v4
+        with:
+          name: monthly-cultural-content-review
+          path: ${{ runner.temp }}/monthly-review
+      - name: Update tracker only for new evidence
+        run: node scripts/monthlyReviewIssue.mjs --notify "$RUNNER_TEMP/monthly-review/report.json"
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
