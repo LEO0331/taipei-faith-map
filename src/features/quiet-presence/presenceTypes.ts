@@ -1,4 +1,5 @@
 export const QUIET_GARDEN_CHANNEL = 'quiet-garden:v1';
+export const GARDEN_JOIN_TIMEOUT_MS = 60_000;
 export const AVATAR_VARIANTS = ['sage', 'ochre', 'clay'] as const;
 export const SEAT_IDS = ['seat-1', 'seat-2', 'seat-3', 'seat-4', 'seat-5', 'seat-6', 'seat-7', 'seat-8'] as const;
 export const GARDEN_DEFAULT_SEAT = SEAT_IDS[4];
