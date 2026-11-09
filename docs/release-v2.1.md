@@ -55,3 +55,15 @@ The local combined report checked 29 links and classified two HTTP 403 results a
 | P3 | Perform physical-device and screen-reader checks, then use observed issues to prioritize any additional UI polish. |
 
 The owner can manually dispatch the workflow once it is present on the default branch. Scheduled runs can be delayed or dropped. [GitHub workflow triggers](https://docs.github.com/en/actions/reference/workflows-and-actions/events-that-trigger-workflows#schedule)
+
+## Production Garden hotfix — 2026-11-09
+
+A read-only Realtime log query found three `ClientPresenceRateLimitReached` events from 11:12 to 11:15 Asia/Taipei. The previous two-second action interval could schedule 15 changed seats plus the initial registration in 30 seconds with prompt acknowledgments. Supabase documents a default of five `track()` or `untrack()` operations per connection in 30 seconds. The production configuration export did not expose a per-client override. [Supabase Presence limit](https://supabase.com/kb/troubleshooting/realtime-client-presence-rate-limit-reached)
+
+The client uses a 31-second monotonic rolling budget shared by visits and reconnects that reuse its SDK instance. Four slots cover track attempts, including registration and reconnect, and the fifth is reserved for departure. If no departure slot is available, the socket closes and its Presence is removed by disconnect. Acknowledged identical poses require no send. A single latest pose waits for capacity, while waves have a separate pending slot and two-second send interval. An unsuccessful acknowledgement leaves the pose unconfirmed. Queued work is cancelled on disconnect or leave.
+
+In the deterministic eight-seat test, 15 choices spaced two seconds apart generated four track attempts in the first 30 seconds, including the initial registration. The fifth attempt sent the final seat when capacity returned at 31 seconds. The previous count of 16 is calculated from the old pacing under the same prompt-ACK scenario. Local actions remain immediate while the newest pose awaits acknowledgment.
+
+Validation used locked dependencies, offline transport and accessibility tests, the structural content audit, the Pages build and asset checker, 23 Chromium demo cases, and local Garden rendering checks at 1280, 375 and 320 pixels with simulated transport. The main bundle is 171.46 kB gzip and the Garden lazy module is 16.51 kB gzip in the Pages build. Hosted two-browser synchronization remains to be checked.
+
+After deployment, use two separate ordinary browser profiles and complete the real guest verification in each. With both present, switch among all eight seats in the first profile for more than 30 seconds, repeat one seat, then wave and rest. Check that the first character responds immediately and the other profile eventually sees the final pose. Test backgrounding, leave and re-entry. Inspect Realtime logs for the test time and record any rate-limit errors. Roll back by reverting this hotfix through the usual Pages review and deploy path.

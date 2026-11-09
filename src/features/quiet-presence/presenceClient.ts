@@ -7,6 +7,25 @@ export type GardenConnection = { guestKey: string; perform: (gesture: GardenGest
 
 const ACTION_INTERVAL_MS = 2000;
 const ACTION_ACK_MS = 3000;
+// Supabase documents five track/untrack operations per connection in 30 seconds.
+// Keep four slots for tracking, reserve one for departure, and pad the window.
+const PRESENCE_WINDOW_MS = 31_000;
+const TRACK_SLOTS = 4;
+const PRESENCE_SLOTS = 5;
+// Keep history across reconnects and visits that reuse this page's client.
+const presenceAttempts = new WeakMap<SupabaseClient, number[]>();
+
+function presenceDelay(client: SupabaseClient, limit: number): number {
+  const now = performance.now();
+  const recent = (presenceAttempts.get(client) ?? []).filter(time => now - time < PRESENCE_WINDOW_MS);
+  presenceAttempts.set(client, recent);
+  return recent.length < limit ? 0 : Math.ceil(recent[recent.length - limit] + PRESENCE_WINDOW_MS - now);
+}
+
+function countPresenceAttempt(client: SupabaseClient) {
+  presenceAttempts.get(client)!.push(performance.now());
+}
+
 type Options = { captchaToken?: string; onCaptchaConsumed?: () => void; signal?: AbortSignal; onPeers: (peers: PresenceState[]) => void; onGesture?: (event: GestureEvent) => void; onStatus?: (status: 'connected' | 'reconnecting' | 'unavailable') => void };
 
 /** One authorized neutral topic, occasional state changes, no location/history fields. */
@@ -21,14 +40,18 @@ export async function joinQuietGarden({ captchaToken, onCaptchaConsumed, signal,
   let own: PresenceState = { guestKey, avatarVariant: AVATAR_VARIANTS[parseInt(guestKey.slice(0, 2), 16) % AVATAR_VARIANTS.length], gesture: 'idle', seatId: GARDEN_DEFAULT_SEAT };
   let desiredOwn = own;
   const channel = client.channel(QUIET_GARDEN_CHANNEL, { config: { private: true, presence: { key: guestKey }, broadcast: { ack: true, self: false } } });
-  let live = true, joined = false, connected = false, lastAction = -Infinity, nonce = 0;
+  let live = true, joined = false, connected = false, lastPose = -Infinity, lastWave = -Infinity, nonce = 0;
+  let poseConfirmed = false;
   let peers: PresenceState[] = [];
   const receivedNonces = new Map<string, number>();
   let rejectJoin: ((error: Error) => void) | undefined;
   let timeout: ReturnType<typeof setTimeout> | undefined;
-  type Action = { gesture: GardenGesture; resolve: (sent: boolean) => void };
-  let pendingAction: Action | undefined;
+  type ResolveAction = (sent: boolean) => void;
+  let pendingPose: ResolveAction | undefined;
+  let pendingWave: ResolveAction | undefined;
   let actionTimer: ReturnType<typeof setTimeout> | undefined;
+  let registrationTimer: ReturnType<typeof setTimeout> | undefined;
+  let registering = false;
   let actionEpoch = 0;
   let sending = false;
   let cancelActiveAction: (() => void) | undefined;
@@ -37,32 +60,50 @@ export async function joinQuietGarden({ captchaToken, onCaptchaConsumed, signal,
     ++actionEpoch;
     if (actionTimer) clearTimeout(actionTimer);
     actionTimer = undefined;
-    pendingAction?.resolve(false); pendingAction = undefined;
+    if (registrationTimer) clearTimeout(registrationTimer);
+    registrationTimer = undefined;
+    registering = false;
+    pendingPose?.(false); pendingPose = undefined;
+    pendingWave?.(false); pendingWave = undefined;
     desiredOwn = own;
     cancelActiveAction?.();
   };
   const scheduleAction = () => {
-    if (!live || !connected || sending || !pendingAction || actionTimer) return;
-    const delay = Math.max(0, ACTION_INTERVAL_MS - (Date.now() - lastAction));
+    if (actionTimer) clearTimeout(actionTimer);
+    actionTimer = undefined;
+    if (!live || !connected || sending) return;
+    if (pendingPose && poseConfirmed && own.gesture === desiredOwn.gesture && own.seatId === desiredOwn.seatId) {
+      pendingPose(true); pendingPose = undefined;
+    }
+    const now = performance.now();
+    const poseDelay = pendingPose ? Math.max(presenceDelay(client, TRACK_SLOTS), ACTION_INTERVAL_MS - (now - lastPose)) : Infinity;
+    const waveDelay = pendingWave ? Math.max(0, ACTION_INTERVAL_MS - (now - lastWave)) : Infinity;
+    const delay = Math.min(poseDelay, waveDelay);
+    if (!Number.isFinite(delay)) return;
     if (delay) {
-      actionTimer = setTimeout(() => { actionTimer = undefined; void sendAction(); }, delay);
-    } else void sendAction();
+      actionTimer = setTimeout(scheduleAction, delay);
+    } else void sendAction(waveDelay < poseDelay);
   };
-  const sendAction = async () => {
-    if (!live || !connected || sending || !pendingAction || signal?.aborted) return;
-    const action = pendingAction; pendingAction = undefined;
+  const sendAction = async (wave: boolean) => {
+    const resolveAction = wave ? pendingWave : pendingPose;
+    if (!resolveAction) return;
+    if (wave) pendingWave = undefined;
+    else pendingPose = undefined;
     const epoch = actionEpoch;
-    sending = true; lastAction = Date.now();
+    sending = true;
     let deadline: ReturnType<typeof setTimeout> | undefined;
     let cancel: () => void = () => undefined;
     const cancelled = new Promise<boolean>(resolve => { cancel = () => resolve(false); });
     cancelActiveAction = cancel;
     const next = desiredOwn;
-    // A wave must not erase an unsent seat/pose choice. Synchronize that pose
-    // first, then use the next throttled slot for the broadcast itself.
-    const poseBeforeWave = action.gesture === 'wave' && (own.gesture !== next.gesture || own.seatId !== next.seatId);
     try {
-      const operation = action.gesture === 'wave' && !poseBeforeWave
+      if (wave) lastWave = performance.now();
+      else {
+        lastPose = performance.now();
+        poseConfirmed = false;
+        countPresenceAttempt(client);
+      }
+      const operation = wave
         ? channel.send({ type: 'broadcast', event: 'gesture', payload: { guestKey, gesture: 'wave', nonce: nonce++ } }, { timeout: ACTION_ACK_MS })
         : channel.track(next, { timeout: ACTION_ACK_MS });
       const accepted = await Promise.race([
@@ -71,10 +112,9 @@ export async function joinQuietGarden({ captchaToken, onCaptchaConsumed, signal,
         new Promise<boolean>(resolve => { deadline = setTimeout(() => resolve(false), ACTION_ACK_MS); }),
       ]);
       const current = live && connected && epoch === actionEpoch && !signal?.aborted;
-      if (accepted && current && (action.gesture !== 'wave' || poseBeforeWave)) own = next;
-      if (accepted && current && poseBeforeWave && !pendingAction) pendingAction = action;
-      else action.resolve(accepted && current && !poseBeforeWave);
-    } catch { action.resolve(false); }
+      if (accepted && current && !wave) { own = next; poseConfirmed = true; }
+      resolveAction(accepted && current);
+    } catch { resolveAction(false); }
     finally {
       if (deadline) clearTimeout(deadline);
       if (cancelActiveAction === cancel) cancelActiveAction = undefined;
@@ -91,7 +131,9 @@ export async function joinQuietGarden({ captchaToken, onCaptchaConsumed, signal,
     signal?.removeEventListener('abort', aborted);
     rejectJoin?.(new QuietServiceUnavailableError()); rejectJoin = undefined;
     onPeers([]);
-    await releaseChannel(client, channel);
+    const canUntrack = joined && presenceDelay(client, PRESENCE_SLOTS) === 0;
+    if (canUntrack) countPresenceAttempt(client);
+    await releaseChannel(client, channel, canUntrack);
   };
   const aborted = () => { void leave(); };
   signal?.addEventListener('abort', aborted, { once: true });
@@ -111,16 +153,38 @@ export async function joinQuietGarden({ captchaToken, onCaptchaConsumed, signal,
     await new Promise<void>((resolve, reject) => {
       rejectJoin = reject;
       timeout = setTimeout(() => { onStatus?.('unavailable'); void leave(); }, 10_000);
-      channel.subscribe(async status => {
+      const register = async (epoch: number) => {
+        if (!live || epoch !== actionEpoch) return;
+        const delay = presenceDelay(client, TRACK_SLOTS);
+        if (delay) {
+          registrationTimer = setTimeout(() => void register(epoch), delay);
+          return;
+        }
+        countPresenceAttempt(client);
+        try {
+          if (await channel.track(own, { timeout: ACTION_ACK_MS }) !== 'ok') throw new QuietServiceUnavailableError();
+          if (!live || epoch !== actionEpoch) return;
+          registering = false; poseConfirmed = true; joined = true; connected = true;
+          if (timeout) clearTimeout(timeout);
+          rejectJoin = undefined;
+          onStatus?.('connected'); resolve();
+        } catch {
+          if (live && epoch === actionEpoch) { onStatus?.('unavailable'); void leave(); }
+        }
+      };
+      channel.subscribe(status => {
         if (!live) return;
         if (status === 'SUBSCRIBED') {
-          try {
-            if (await channel.track(own) !== 'ok') throw new QuietServiceUnavailableError();
-            if (!live) return;
-            joined = true; connected = true; if (timeout) clearTimeout(timeout); rejectJoin = undefined;
-            onStatus?.('connected'); resolve();
-          } catch { onStatus?.('unavailable'); void leave(); }
+          if (connected || registering) return;
+          registering = true;
+          const delay = presenceDelay(client, TRACK_SLOTS);
+          if (delay) {
+            if (timeout) clearTimeout(timeout);
+            timeout = setTimeout(() => { onStatus?.('unavailable'); void leave(); }, delay + ACTION_ACK_MS + 1000);
+          }
+          void register(actionEpoch);
         } else if (['CHANNEL_ERROR', 'TIMED_OUT', 'CLOSED'].includes(status)) {
+          if (joined && !connected && !registering) return;
           connected = false;
           cancelActions();
           if (!joined) { onStatus?.('unavailable'); void leave(); }
@@ -140,21 +204,21 @@ export async function joinQuietGarden({ captchaToken, onCaptchaConsumed, signal,
     if (gesture !== 'wave') {
       desiredOwn = { ...desiredOwn, gesture, seatId: seatId ?? desiredOwn.seatId };
     }
-    // Keep the most recent intent during a burst, without flooding Realtime.
-    // The caller can discard a superseded result using its local action sequence.
-    pendingAction?.resolve(false);
     return new Promise<boolean>(resolve => {
-      pendingAction = { gesture, resolve };
+      if (gesture === 'wave') { pendingWave?.(false); pendingWave = resolve; }
+      else { pendingPose?.(false); pendingPose = resolve; }
       scheduleAction();
     });
   } };
 }
 
-async function releaseChannel(client: SupabaseClient, channel: RealtimeChannel) {
+async function releaseChannel(client: SupabaseClient, channel: RealtimeChannel, canUntrack: boolean) {
   // Start untracking and leaving together; do not wait for a lost socket's ACK
   // before cancelling this visit's retries. Corner uses HTTP, not another WS.
   const cleanup: Promise<unknown>[] = [];
-  try { cleanup.push(boundedCleanup(channel.untrack())); } catch { /* Continue teardown. */ }
+  if (canUntrack) {
+    try { cleanup.push(boundedCleanup(channel.untrack())); } catch { /* Continue teardown. */ }
+  }
   try { cleanup.push(boundedCleanup(channel.unsubscribe(500))); } catch { /* Continue teardown. */ }
   client.realtime.disconnect();
   stopOptionalAuthRefresh(client);

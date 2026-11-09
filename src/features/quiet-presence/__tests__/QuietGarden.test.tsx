@@ -126,7 +126,7 @@ describe('optional quiet garden', () => {
     vi.mocked(joinQuietGarden).mockImplementation(() => new Promise(resolve => { resolveJoin = resolve; }));
     const { container } = render(<QuietGarden language="en" enabled onClose={vi.fn()} />);
     fireEvent.click(screen.getByRole('button', { name: 'Enter Quiet Garden' }));
-    await act(() => vi.advanceTimersByTimeAsync(10_001));
+    await act(() => vi.advanceTimersByTimeAsync(60_001));
     expect(screen.getByText('Shared presence is temporarily unavailable. Solo exploration remains available.')).toBeTruthy();
     await act(async () => { resolveJoin(connection); await Promise.resolve(); });
     expect(connection.leave).toHaveBeenCalledOnce();
@@ -154,6 +154,22 @@ describe('optional quiet garden', () => {
     expect(screen.getByRole('status').textContent).toContain('Sharing your action');
     await act(async () => acknowledge(true));
     expect(screen.getByRole('status').textContent).toContain('Your action reached the garden');
+  });
+
+  it('aborts an active share when the garden closes and ignores its late result', async () => {
+    let acknowledge!: (value: boolean) => void;
+    connection.perform.mockImplementationOnce(() => new Promise(resolve => { acknowledge = resolve; }));
+    const onClose = vi.fn();
+    render(<QuietGarden language="en" enabled onClose={onClose} />);
+    fireEvent.click(screen.getByRole('button', { name: 'Enter Quiet Garden' }));
+    fireEvent.click(await screen.findByRole('button', { name: 'Wave' }));
+    const signal = vi.mocked(joinQuietGarden).mock.calls[0][0].signal;
+    fireEvent.click(screen.getByRole('button', { name: 'Return to exploration' }));
+    expect(onClose).toHaveBeenCalledOnce();
+    expect(signal?.aborted).toBe(true);
+    expect(connection.leave).toHaveBeenCalledOnce();
+    await act(async () => acknowledge(true));
+    expect(screen.queryByText(/Your action reached the garden/)).toBeNull();
   });
 
   it('keeps local feedback and provides a retry instead of silently ignoring a failed send', async () => {

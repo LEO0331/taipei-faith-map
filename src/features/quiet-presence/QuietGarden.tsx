@@ -4,6 +4,7 @@ import type { Language } from '../../types';
 import { joinQuietGarden } from './presenceClient';
 import type { GardenConnection } from './presenceClient';
 import type { GardenGesture, PresenceState } from './presenceTypes';
+import { GARDEN_JOIN_TIMEOUT_MS } from './presenceTypes';
 import { QuietVerificationRequiredError } from '../../services/supabaseClient';
 import GardenScene, { GARDEN_DEFAULT_SEAT, GARDEN_DEFAULT_BENCH } from './GardenScene';
 import './quiet-presence.css';
@@ -78,7 +79,7 @@ export default function QuietGarden({ language, onClose, enabled = false, captch
     const deadline = setTimeout(() => {
       timers.current.delete(deadline);
       if (active === generation.current) { leave(); setStatus('unavailable'); }
-    }, 10_000);
+    }, GARDEN_JOIN_TIMEOUT_MS);
     timers.current.add(deadline);
     try {
       const joined = await joinQuietGarden({ captchaToken, onCaptchaConsumed, signal: abort.signal, onPeers: next => { if (active === generation.current) setPeers(next); },
