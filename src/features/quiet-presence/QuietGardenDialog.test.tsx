@@ -3,22 +3,34 @@ import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import QuietGardenDialog from './QuietGardenDialog';
 import { getFeatureFlags } from '../../utils/featureFlags';
-import { useVisitorMotion } from '../faith-moments/useVisitorMotion';
 
 vi.mock('../../utils/featureFlags', () => ({ getFeatureFlags: vi.fn() }));
-vi.mock('../faith-moments/useVisitorMotion', () => ({ useVisitorMotion: vi.fn() }));
-vi.mock('./QuietGarden', () => ({ default: ({ enabled, captchaToken, challenge, notesSlot, onCaptchaConsumed }: { enabled: boolean; captchaToken?: string; challenge?: React.ReactNode; notesSlot?: React.ReactNode; onCaptchaConsumed?: () => void }) => <section data-testid="garden" data-enabled={String(enabled)} data-token={captchaToken}><button onClick={onCaptchaConsumed}>Consume verification</button>{challenge}{notesSlot}</section> }));
+vi.mock('./QuietGarden', () => ({ default: ({ enabled, motionEnabled, captchaToken, challenge, notesSlot, onCaptchaConsumed }: { enabled: boolean; motionEnabled: boolean; captchaToken?: string; challenge?: React.ReactNode; notesSlot?: React.ReactNode; onCaptchaConsumed?: () => void }) => <section data-testid="garden" data-enabled={String(enabled)} data-motion={String(motionEnabled)} data-token={captchaToken}><button onClick={onCaptchaConsumed}>Consume verification</button>{challenge}{notesSlot}</section> }));
 vi.mock('../quiet-corner/QuietCorner', () => ({ default: ({ onClose }: { onClose: () => void }) => <section aria-label="Notes"><button onClick={onClose}>Close notes</button></section> }));
 vi.mock('../../components/GuestChallenge', () => ({ GuestChallenge: ({ onToken, resetKey }: { onToken: (value: string) => void; resetKey: number }) => <button data-reset={resetKey} onClick={() => onToken('proof')}>Mock verification</button> }));
-const setMotionEnabled = vi.fn();
 beforeEach(() => {
   vi.clearAllMocks();
+  localStorage.clear();
   vi.mocked(getFeatureFlags).mockReturnValue({ faithMoments: true, quietPresence: true, quietCorner: false });
-  vi.mocked(useVisitorMotion).mockReturnValue({ motionEnabled: true, setMotionEnabled } as unknown as ReturnType<typeof useVisitorMotion>);
 });
-afterEach(() => { cleanup(); document.body.style.overflow = ''; });
+afterEach(() => { cleanup(); vi.unstubAllGlobals(); document.body.style.overflow = ''; });
 
 describe('quiet garden dialog shell', () => {
+  it('enables Garden motion independently of the saved Faith Moments preference', () => {
+    localStorage.setItem('taipei-faith-map-motion', 'off');
+    render(<QuietGardenDialog language="en" onLanguageChange={vi.fn()} onClose={vi.fn()} />);
+    expect(screen.getByTestId('garden').getAttribute('data-motion')).toBe('true');
+    expect(screen.queryByRole('button', { name: /Animation/ })).toBeNull();
+  });
+
+  it('still honors device reduced motion without offering a toggle', () => {
+    const removeEventListener = vi.fn();
+    vi.stubGlobal('matchMedia', vi.fn(() => ({ matches: true, addEventListener: vi.fn(), removeEventListener })));
+    const { unmount } = render(<QuietGardenDialog language="en" onLanguageChange={vi.fn()} onClose={vi.fn()} />);
+    expect(screen.getByTestId('garden').getAttribute('data-motion')).toBe('false');
+    expect(screen.getByText(/Motion follows your device/)).toBeTruthy();
+    unmount(); expect(removeEventListener).toHaveBeenCalledWith('change', expect.any(Function));
+  });
   it('ignores controls hidden by ancestors or closed details when wrapping focus', () => {
     render(<QuietGardenDialog language="en" onLanguageChange={vi.fn()} onClose={vi.fn()} />);
     const dialog = screen.getByRole('dialog');
@@ -61,15 +73,14 @@ describe('quiet garden dialog shell', () => {
     outside.focus(); expect(document.activeElement).toBe(outside); outside.remove();
   });
 
-  it('passes the disabled presence flag and preserves language and motion controls', () => {
+  it('passes the disabled presence flag and preserves language without a garden motion toggle', () => {
     vi.mocked(getFeatureFlags).mockReturnValue({ faithMoments: true, quietPresence: false, quietCorner: false });
     const onLanguageChange = vi.fn();
     render(<QuietGardenDialog language="en" onLanguageChange={onLanguageChange} onClose={vi.fn()} />);
     expect(screen.getByTestId('garden').getAttribute('data-enabled')).toBe('false');
     fireEvent.click(screen.getByRole('button', { name: '中文' }));
     expect(onLanguageChange).toHaveBeenCalledWith('zh');
-    fireEvent.click(screen.getByRole('button', { name: 'Animation: On' }));
-    expect(setMotionEnabled).toHaveBeenCalledWith(false);
+    expect(screen.queryByRole('button', { name: /Animation:/ })).toBeNull();
   });
 
   it('clears a consumed CAPTCHA and requests a fresh widget', () => {
