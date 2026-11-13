@@ -343,6 +343,11 @@ select {
   min-width: 9rem;
 }
 
+.nearby-privacy {
+  margin: 0;
+  font-size: 0.875rem;
+}
+
 .nearby-list {
   display: grid;
   gap: 0.45rem;
