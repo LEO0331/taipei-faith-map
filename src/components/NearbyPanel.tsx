@@ -1,3 +1,4 @@
+import { useId } from 'react';
 import type { Language, NearbyResult } from '../types';
 import { formatDistance } from '../utils/geo';
 import { translations } from '../utils/i18n';
@@ -22,11 +23,12 @@ export function NearbyPanel({
   results,
 }: Props) {
   const t = translations[language];
+  const privacyNoticeId = useId();
 
   return (
     <section className="nearby-panel">
       <div className="nearby-actions">
-        <button className="primary-button" type="button" onClick={onNearby}>
+        <button className="primary-button" type="button" onClick={onNearby} aria-describedby={privacyNoticeId}>
           {t.showNearby}
         </button>
         <label>
@@ -40,6 +42,7 @@ export function NearbyPanel({
           </select>
         </label>
       </div>
+      <p className="nearby-privacy status-text" id={privacyNoticeId}>{t.nearbyPrivacy}</p>
       {error ? <p className="status-text">{error}</p> : null}
       {results.length > 0 ? (
         <div>

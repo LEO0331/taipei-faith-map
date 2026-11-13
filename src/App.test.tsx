@@ -141,7 +141,12 @@ describe('Faith Spaces map integration', () => {
     const { container } = render(<App />);
     await screen.findByRole('heading', { name: organization.name });
     fireEvent.change(screen.getByLabelText('附近範圍'), { target: { value: '2000' } });
-    fireEvent.click(screen.getByRole('button', { name: '顯示附近宗教團體' }));
+    const locateButton = screen.getByRole('button', {
+      name: '顯示附近宗教團體',
+      description: /OpenStreetMap.*IP 位址和大致位置/,
+    });
+    expect(getCurrentPosition).not.toHaveBeenCalled();
+    fireEvent.click(locateButton);
     const nearby = container.querySelector('.nearby-panel')!;
     expect(within(nearby as HTMLElement).getByRole('heading', { name: '附近宗教團體' })).toBeTruthy();
     expect(within(nearby as HTMLElement).getByText(organization.name)).toBeTruthy();
@@ -154,6 +159,10 @@ describe('Faith Spaces map integration', () => {
     fireEvent.click(within(dialog).getByRole('button', { name: 'Close Faith Space' }));
     expect(screen.queryByRole('dialog')).toBeNull();
     expect((screen.getByLabelText('Nearby radius') as HTMLSelectElement).value).toBe('2000');
+    expect(screen.getByRole('button', {
+      name: 'Show nearby religious organizations',
+      description: /OpenStreetMap.*IP address and approximate location/,
+    })).toBeTruthy();
     expect(within(nearby as HTMLElement).getByRole('heading', { name: 'Nearby religious organizations' })).toBeTruthy();
     expect(within(nearby as HTMLElement).getByText(organization.name)).toBeTruthy();
     expect(nearby.querySelectorAll('li')).toHaveLength(2);
